@@ -689,3 +689,15 @@ vec2 reflect(vec2 v, vec2 n) {
 vec3 reflect(vec3 v, vec3 n) {
 	return v - 2.0f * dot(n, v) * n;
 }
+
+float mix(float v0, float v1, float a) {
+	return (1.0f-a)*v0 + a*v1;
+}
+
+vec2 mix(vec2 v0, vec2 v1, float a) {
+	return (1.0f-a)*v0 + a*v1;
+}
+
+vec3 mix(vec3 v0, vec3 v1, float a) {
+	return (1.0f-a)*v0 + a*v1;
+}
