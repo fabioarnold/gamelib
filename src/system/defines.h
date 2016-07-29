@@ -19,3 +19,7 @@ union IntFloat {
 
 #define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
 #define ARRAY_FREE(a) if (!(a)) {delete [] (a); (a) = NULL;}
+
+bool isPowerOfTwo(u32 i) {
+	return (i != 0) && !(i & (i-1));
+}

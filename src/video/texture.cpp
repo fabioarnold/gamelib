@@ -9,6 +9,13 @@ void setWrapTexture2D(GLint wrap_s, GLint wrap_t) {
 }
 
 GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mipmaps) {
+	if (build_mipmaps) {
+		if (!(isPowerOfTwo(width) && isPowerOfTwo(height))) {
+			LOGW("Trying to build mipmap of non power of two image");
+			build_mipmaps = false;
+		}
+	}
+
 	GLint internal_format;
 	GLenum format;
 	switch (comp) {
@@ -22,7 +29,11 @@ GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mip
 	GLuint texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	setFilterTexture2D(GL_NEAREST, GL_NEAREST);
+	if (build_mipmaps) {
+		setFilterTexture2D(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
+	} else {
+		setFilterTexture2D(GL_LINEAR, GL_LINEAR);
+	}
 	setWrapTexture2D(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height,
@@ -34,8 +45,40 @@ GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mip
 	}
 #endif
 
-	if (build_mipmaps) {
-		assert(false); // not implemented yet
+	// mipmap building
+	if (build_mipmaps && width > 1 && height > 1) {
+		// test for power of two
+		u8 *buffer = new u8[width * height * comp / 4];
+		u8 *pixels2 = buffer;
+
+		int mipmap_level = 0;
+		do {
+			width  /= 2;
+			height /= 2;
+			mipmap_level++;
+
+			for (int y = 0; y < height; y++) {
+				for (int x = 0; x < width; x++) {
+					u8 *pixel2 = pixels2+((y*width + x) * comp);
+					for (int ci = 0; ci < comp; ci++) {
+						u16 c = pixels[((2*y+0)*2*width + (2*x+0))*comp + ci]
+							  + pixels[((2*y+0)*2*width + (2*x+1))*comp + ci]
+							  + pixels[((2*y+1)*2*width + (2*x+0))*comp + ci]
+							  + pixels[((2*y+1)*2*width + (2*x+1))*comp + ci];
+						pixel2[ci] = (u8)(c/4);
+					}
+				}
+			}
+			glTexImage2D(GL_TEXTURE_2D, mipmap_level, internal_format,
+				width, height, 0, format, GL_UNSIGNED_BYTE, pixels2);
+
+			// swap
+			u8 *tmp = pixels;
+			pixels = pixels2;
+			pixels2 = tmp;
+		} while (width > 1 && height > 1);
+
+		delete [] buffer;
 	}
 
 	return texture;
@@ -49,11 +92,24 @@ GLuint loadTexture2D(const char *filepath, bool build_mipmaps, int *out_width, i
 		LOGE("Image extension not found: %s", filepath);
 		return 0;
 	}
+
+#ifdef USE_STB_IMAGE
+	int comp;
+	u8 *pixels = stbi_load(filepath, out_width, out_height, &comp, 0);
+	if (pixels) {
+		GLuint texture = loadTexture2D(pixels, *out_width, *out_height, comp, build_mipmaps);
+		stbi_image_free(pixels);
+		return texture;
+	} else {
+		LOGE("Unrecognized image format: %s", filepath);
+	}
+#else
 	if (!strncmp(ext, ".tga", 4)) {
 		return loadTexture2DTGA(filepath, build_mipmaps, out_width, out_height);
 	} else {
 		LOGE("Unrecognized image format: %s", filepath);
 	}
+#endif
 	return 0;
 }
 
