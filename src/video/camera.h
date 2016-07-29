@@ -11,4 +11,5 @@ struct Camera {
 	void updateViewMatrix();
 
 	vec3 makeViewRay(int screen_x, int screen_y, VideoMode video);
+	mat4 makeInverseViewMatrix();
 };

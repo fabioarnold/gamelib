@@ -1,7 +1,7 @@
 // TODO: use modulo for arbitrary values
 // wraps value to [-pi, pi]
 float wrapMPi(float angle) {
-	if (angle > (float)M_PI) return angle - 2.0f * (float)M_PI;
+	if (angle >  (float)M_PI) return angle - 2.0f * (float)M_PI;
 	if (angle < -(float)M_PI) return angle + 2.0f * (float)M_PI;
 	return angle;
 }
