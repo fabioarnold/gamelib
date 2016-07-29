@@ -1,18 +1,22 @@
+const int SHADER_TYPE_COUNT = 2; // vertex and fragment shaders
+
 class Shader {
 public:
 	Shader();
-	~Shader() {free();} // WARNING: makes opengl calls
+	~Shader() {free();} // WARNING: makes opengl calls (needs valid opengl context)
 
 	void free();
 
-	void compileAndAttach(GLuint shader_type, const char *shader_src, const char *shader_filename = "");
-	void readCompileAndAttach(GLuint shader_type, const char *shader_name);
+	// will return true on success
+	bool compileAndAttach(GLuint shader_type, const char *shader_src, const char *shader_filename = "");
+	bool readCompileAndAttach(GLuint shader_type, const char *shader_name);
+	char *getShaderCompileErrorLog(GLuint shader_type);
 
 	void bindVertexAttrib(const char *name, GLuint index);
 	// color is the index to the COLOR_ATTACHMENTi specified by glDrawBuffers
 	void bindFragData(const char *name, GLuint color);
 
-	void link();
+	bool link();
 
 	int getUniformLocation(const char *name);
 
@@ -21,9 +25,10 @@ public:
 	GLuint getProgram() {return _program;}
 
 private:
+	GLuint *getShader(GLuint shader_type); // get reference to vertex or fragment shader
 	GLuint compileShader(GLuint shader_type, const char *shader_source);
 	bool isCompiled(GLuint shader);
-	void printCompileErrorLog(GLuint shader_type, GLuint shader);
+	char *getCompileErrorLog(GLuint shader_type, GLuint shader);
 
 	GLuint _vert_shader;
 	GLuint _frag_shader;
