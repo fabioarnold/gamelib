@@ -1,3 +1,13 @@
+void imageCopyPixels(u8 *dest, u8 *src, int dest_width, int src_width, int comp, int line_width, int num_lines);
+void imageHalve(u8 *pixels, int width, int height, int comp);
+void imageFlipHorizontally(u8 *pixels, int width, int height, int comp);
+void imageFlipVertically(u8 *pixels, int width, int height, int comp);
+
+void imageCopyPixels(float *dest, float *src, int dest_width, int src_width, int comp, int line_width, int num_lines);
+void imageHalve(float *pixels, int width, int height, int comp);
+void imageFlipHorizontally(float *pixels, int width, int height, int comp);
+void imageFlipVertically(float *pixels, int width, int height, int comp);
+
 void setFilterTexture2D(GLint min_filter, GLint mag_filter) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
@@ -46,39 +56,65 @@ GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mip
 #endif
 
 	// mipmap building
-	if (build_mipmaps && width > 1 && height > 1) {
-		// test for power of two
-		u8 *buffer = new u8[width * height * comp / 4];
-		u8 *pixels2 = buffer;
-
-		int mipmap_level = 0;
-		do {
+	if (build_mipmaps) {
+		for (int mipmap_level = 1; width > 1 && height > 1; mipmap_level++) {
+			imageHalve(pixels, width, height, comp);
 			width  /= 2;
 			height /= 2;
-			mipmap_level++;
-
-			for (int y = 0; y < height; y++) {
-				for (int x = 0; x < width; x++) {
-					u8 *pixel2 = pixels2+((y*width + x) * comp);
-					for (int ci = 0; ci < comp; ci++) {
-						u16 c = pixels[((2*y+0)*2*width + (2*x+0))*comp + ci]
-							  + pixels[((2*y+0)*2*width + (2*x+1))*comp + ci]
-							  + pixels[((2*y+1)*2*width + (2*x+0))*comp + ci]
-							  + pixels[((2*y+1)*2*width + (2*x+1))*comp + ci];
-						pixel2[ci] = (u8)(c/4);
-					}
-				}
-			}
 			glTexImage2D(GL_TEXTURE_2D, mipmap_level, internal_format,
-				width, height, 0, format, GL_UNSIGNED_BYTE, pixels2);
+				width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
+		}
+	}
 
-			// swap
-			u8 *tmp = pixels;
-			pixels = pixels2;
-			pixels2 = tmp;
-		} while (width > 1 && height > 1);
+	return texture;
+}
 
-		delete [] buffer;
+GLuint loadTexture2D(float *pixels, int width, int height, int comp, bool build_mipmaps) {
+	if (build_mipmaps) {
+		if (!(isPowerOfTwo(width) && isPowerOfTwo(height))) {
+			LOGW("Trying to build mipmap of non power of two image");
+			build_mipmaps = false;
+		}
+	}
+
+	GLint internal_format;
+	GLenum format;
+	switch (comp) {
+		case 1: format = internal_format = GL_ALPHA; break;
+		case 2: format = internal_format = GL_LUMINANCE_ALPHA; break;
+		case 3: format = internal_format = GL_RGB; break;
+		case 4: format = internal_format = GL_RGBA; break;
+		default: LOGE("Invalid bit depth"); return 0;
+	}
+
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	if (build_mipmaps) {
+		setFilterTexture2D(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
+	} else {
+		setFilterTexture2D(GL_LINEAR, GL_LINEAR);
+	}
+	setWrapTexture2D(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height,
+		0, format, GL_FLOAT, pixels);
+#ifdef DEBUG
+	GLenum gl_error = glGetError();
+	if (gl_error) {
+		LOGE("gl error: %d", gl_error);
+	}
+#endif
+
+	// mipmap building
+	if (build_mipmaps) {
+		for (int mipmap_level = 1; width > 1 && height > 1; mipmap_level++) {
+			imageHalve(pixels, width, height, comp);
+			width  /= 2;
+			height /= 2;
+			glTexImage2D(GL_TEXTURE_2D, mipmap_level, internal_format,
+				width, height, 0, format, GL_FLOAT, pixels);
+		}
 	}
 
 	return texture;
@@ -86,7 +122,7 @@ GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mip
 
 GLuint loadTexture2DTGA(const char *filepath, bool build_mipmaps, int *out_width, int *out_height);
 
-GLuint loadTexture2D(const char *filepath, bool build_mipmaps, int *out_width, int *out_height){
+GLuint loadTexture2D(const char *filepath, bool build_mipmaps, int *out_width, int *out_height) {
 	const char *ext = strrchr(filepath, (int)'.');
 	if (!ext) {
 		LOGE("Image extension not found: %s", filepath);
@@ -95,13 +131,24 @@ GLuint loadTexture2D(const char *filepath, bool build_mipmaps, int *out_width, i
 
 #ifdef USE_STB_IMAGE
 	int comp;
-	u8 *pixels = stbi_load(filepath, out_width, out_height, &comp, 0);
-	if (pixels) {
-		GLuint texture = loadTexture2D(pixels, *out_width, *out_height, comp, build_mipmaps);
-		stbi_image_free(pixels);
-		return texture;
+	if (!strncmp(ext, ".hdr", 4)) {
+		float *pixels = stbi_loadf(filepath, out_width, out_height, &comp, 0);
+		if (pixels) {
+			GLuint texture = loadTexture2D(pixels, *out_width, *out_height, comp, build_mipmaps);
+			stbi_image_free(pixels);
+			return texture;
+		} else {
+			LOGE("Invalid HDR file: %s", filepath);
+		}
 	} else {
-		LOGE("Unrecognized image format: %s", filepath);
+		u8 *pixels = stbi_load(filepath, out_width, out_height, &comp, 0);
+		if (pixels) {
+			GLuint texture = loadTexture2D(pixels, *out_width, *out_height, comp, build_mipmaps);
+			stbi_image_free(pixels);
+			return texture;
+		} else {
+			LOGE("Unrecognized image format: %s", filepath);
+		}
 	}
 #else
 	if (!strncmp(ext, ".tga", 4)) {
@@ -110,7 +157,297 @@ GLuint loadTexture2D(const char *filepath, bool build_mipmaps, int *out_width, i
 		LOGE("Unrecognized image format: %s", filepath);
 	}
 #endif
+
 	return 0;
+}
+
+GLuint loadTextureCubeCross(u8 *pixels, int width, int height, int comp, bool build_mipmaps) {
+	int slice_size = width / 3;
+	if (!isPowerOfTwo(slice_size) || (height/4 != slice_size)) {
+		LOGE("Incorrect dimensions for cube cross: %dx%d", width, height);
+		return 0;
+	}
+
+	GLint internal_format;
+	GLenum format;
+	switch (comp) {
+		case 1: format = internal_format = GL_ALPHA; break;
+		case 2: format = internal_format = GL_LUMINANCE_ALPHA; break;
+		case 3: format = internal_format = GL_RGB; break;
+		case 4: format = internal_format = GL_RGBA; break;
+		default: LOGE("Invalid bit depth"); return 0;
+	}
+
+	GLuint cubemap;
+	glGenTextures(1, &cubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	if (build_mipmaps) {
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	} else {
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	u8 *slice_pixels = new u8[slice_size*slice_size*comp];
+
+	int cross_offsets[] = {
+		comp * (width * 1*slice_size + 2*slice_size),
+		comp * (width * 1*slice_size + 0*slice_size),
+		comp * (width * 0*slice_size + 1*slice_size),
+		comp * (width * 2*slice_size + 1*slice_size),
+		comp * (width * 1*slice_size + 1*slice_size),
+		comp * (width * 3*slice_size + 1*slice_size)
+	};
+
+	for (int si = 0; si < 6; si++) {
+		imageCopyPixels(slice_pixels, pixels + cross_offsets[si],
+			slice_size, width, comp, slice_size, slice_size);
+		if (si == 5) {
+			imageFlipHorizontally(slice_pixels, slice_size, slice_size, comp);
+			imageFlipVertically(slice_pixels, slice_size, slice_size, comp);
+		}
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, 0,
+			internal_format, slice_size, slice_size,
+			0, format, GL_UNSIGNED_BYTE, slice_pixels);
+		if (build_mipmaps) {
+			int half_slice_size = slice_size;
+			for (int mipmap_level = 1; half_slice_size > 1; mipmap_level++) {
+				imageHalve(slice_pixels, half_slice_size, half_slice_size, comp);
+				half_slice_size /= 2;
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, mipmap_level,
+					internal_format, half_slice_size, half_slice_size,
+					0, format, GL_UNSIGNED_BYTE, slice_pixels);
+			}
+		}	
+	}
+
+	delete [] slice_pixels;
+
+	return cubemap;
+}
+
+GLuint loadTextureCubeCross(float *pixels, int width, int height, int comp, bool build_mipmaps) {
+	int slice_size = width / 3;
+	if (!isPowerOfTwo(slice_size) || (height/4 != slice_size)) {
+		LOGE("Incorrect dimensions for cube cross: %dx%d", width, height);
+		return 0;
+	}
+
+	GLint internal_format;
+	GLenum format;
+	switch (comp) {
+		case 1: format = internal_format = GL_ALPHA; break;
+		case 2: format = internal_format = GL_LUMINANCE_ALPHA; break;
+		case 3: format = internal_format = GL_RGB; break;
+		case 4: format = internal_format = GL_RGBA; break;
+		default: LOGE("Invalid bit depth"); return 0;
+	}
+
+	GLuint cubemap;
+	glGenTextures(1, &cubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+	if (build_mipmaps) {
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	} else {
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	float *slice_pixels = new float[slice_size*slice_size*comp];
+
+	int cross_offsets[] = {
+		comp * (width * 1*slice_size + 2*slice_size),
+		comp * (width * 1*slice_size + 0*slice_size),
+		comp * (width * 0*slice_size + 1*slice_size),
+		comp * (width * 2*slice_size + 1*slice_size),
+		comp * (width * 1*slice_size + 1*slice_size),
+		comp * (width * 3*slice_size + 1*slice_size)
+	};
+
+	for (int si = 0; si < 6; si++) {
+		imageCopyPixels(slice_pixels, pixels + cross_offsets[si],
+			slice_size, width, comp, slice_size, slice_size);
+		if (si == 5) {
+			imageFlipHorizontally(slice_pixels, slice_size, slice_size, comp);
+			imageFlipVertically  (slice_pixels, slice_size, slice_size, comp);
+		}
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, 0,
+			internal_format, slice_size, slice_size,
+			0, format, GL_FLOAT, slice_pixels);
+		if (build_mipmaps) {
+			int half_slice_size = slice_size;
+			for (int mipmap_level = 1; half_slice_size > 1; mipmap_level++) {
+				imageHalve(slice_pixels, half_slice_size, half_slice_size, comp);
+				half_slice_size /= 2;
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, mipmap_level,
+					internal_format, half_slice_size, half_slice_size,
+					0, format, GL_FLOAT, slice_pixels);
+			}
+		}	
+	}
+
+	delete [] slice_pixels;
+
+	return cubemap;
+}
+
+GLuint loadTextureCubeCross(const char *filepath, bool build_mipmaps, int *out_size) {
+	const char *ext = strrchr(filepath, (int)'.');
+	if (!ext) {
+		LOGE("Image extension not found: %s", filepath);
+		return 0;
+	}
+
+#ifdef USE_STB_IMAGE
+	int comp;
+	if (!strncmp(ext, ".hdr", 4)) {
+		int out_width, out_height;
+		float *pixels = stbi_loadf(filepath, &out_width, &out_height, &comp, 0);
+		*out_size = out_width/3;
+		if (pixels) {
+			GLuint texture = loadTextureCubeCross(pixels, out_width, out_height, comp, build_mipmaps);
+			stbi_image_free(pixels);
+			return texture;
+		} else {
+			LOGE("Unrecognized image format: %s", filepath);
+		}
+	} else {
+		int out_width, out_height;
+		u8 *pixels = stbi_load(filepath, &out_width, &out_height, &comp, 0);
+		*out_size = out_width/3;
+		if (pixels) {
+			GLuint texture = loadTextureCubeCross(pixels, out_width, out_height, comp, build_mipmaps);
+			stbi_image_free(pixels);
+			return texture;
+		} else {
+			LOGE("Unrecognized image format: %s", filepath);
+		}
+	}
+#else
+	assert(!"Not implemented");
+#endif
+
+	return 0;
+}
+
+// image functions
+
+void imageCopyPixels(u8 *dest, u8 *src, int dest_width, int src_width, int comp, int line_width, int num_lines) {
+	while (num_lines-- > 0) {
+		memcpy(dest, src, line_width * comp * sizeof(u8));
+		dest += dest_width * comp;
+		src += src_width * comp;
+	}
+}
+
+void imageHalve(u8 *pixels, int width, int height, int comp) {
+	assert(width > 1 && height > 1);
+	int half_width = width / 2;
+	int half_height = height / 2;
+	for (int y = 0; y < half_height; y++) {
+		for (int x = 0; x < half_width; x++) {
+			u8 *dst_pixel = pixels+((y*half_width + x) * comp);
+			for (int ci = 0; ci < comp; ci++) {
+				u16 c = pixels[((2*y+0)*width + (2*x+0))*comp + ci]
+					  + pixels[((2*y+0)*width + (2*x+1))*comp + ci]
+					  + pixels[((2*y+1)*width + (2*x+0))*comp + ci]
+					  + pixels[((2*y+1)*width + (2*x+1))*comp + ci];
+				dst_pixel[ci] = (u8)(c/4);
+			}
+		}
+	}
+}
+
+void imageFlipHorizontally(u8 *pixels, int width, int height, int comp) {
+	u8 *buffer = new u8[comp];
+	for (int y = 0; y < height; y++) {
+		int x1 = 0, x2 = width-1;
+		while (x1 < x2) {
+			memcpy(buffer, pixels + (y * width + x1) * comp, comp * sizeof(u8));
+			memcpy(pixels + (y * width + x1) * comp, pixels + (y * width + x2) * comp, comp * sizeof(u8));
+			memcpy(pixels + (y * width + x2) * comp, buffer, comp * sizeof(u8));
+			x1++;
+			x2--;
+		}
+	}
+	delete [] buffer;
+}
+
+void imageFlipVertically(u8 *pixels, int width, int height, int comp) {
+	u8 *buffer = new u8[width * comp];
+	int y1 = 0, y2 = height - 1;
+	while (y1 < y2) {
+		memcpy(buffer, pixels + y1 * width * comp, width * comp * sizeof(u8));
+		memcpy(pixels + y1 * width * comp, pixels + y2 * width * comp, width * comp * sizeof(u8));
+		memcpy(pixels + y2 * width * comp, buffer, width * comp * sizeof(u8));
+		y1++;
+		y2--;
+	}
+	delete [] buffer;
+}
+
+void imageCopyPixels(float *dest, float *src, int dest_width, int src_width, int comp, int line_width, int num_lines) {
+	while (num_lines-- > 0) {
+		memcpy(dest, src, line_width * comp * sizeof(float));
+		dest += dest_width * comp;
+		src += src_width * comp;
+	}
+}
+
+void imageHalve(float *pixels, int width, int height, int comp) {
+	assert(width > 1 && height > 1);
+	int half_width = width / 2;
+	int half_height = height / 2;
+	for (int y = 0; y < half_height; y++) {
+		for (int x = 0; x < half_width; x++) {
+			float *dst_pixel = pixels+((y*half_width + x) * comp);
+			for (int ci = 0; ci < comp; ci++) {
+				float c = pixels[((2*y+0)*width + (2*x+0))*comp + ci]
+						+ pixels[((2*y+0)*width + (2*x+1))*comp + ci]
+						+ pixels[((2*y+1)*width + (2*x+0))*comp + ci]
+						+ pixels[((2*y+1)*width + (2*x+1))*comp + ci];
+				dst_pixel[ci] = (float)(c*0.25f);
+			}
+		}
+	}
+}
+
+void imageFlipHorizontally(float *pixels, int width, int height, int comp) {
+	float *buffer = new float[comp];
+	for (int y = 0; y < height; y++) {
+		int x1 = 0, x2 = width-1;
+		while (x1 < x2) {
+			memcpy(buffer, pixels + (y * width + x1) * comp, comp * sizeof(float));
+			memcpy(pixels + (y * width + x1) * comp, pixels + (y * width + x2) * comp, comp * sizeof(float));
+			memcpy(pixels + (y * width + x2) * comp, buffer, comp * sizeof(float));
+			x1++;
+			x2--;
+		}
+	}
+	delete [] buffer;
+}
+
+void imageFlipVertically(float *pixels, int width, int height, int comp) {
+	float *buffer = new float[width * comp];
+	int y1 = 0, y2 = height - 1;
+	while (y1 < y2) {
+		memcpy(buffer, pixels + y1 * width * comp, width * comp * sizeof(float));
+		memcpy(pixels + y1 * width * comp, pixels + y2 * width * comp, width * comp * sizeof(float));
+		memcpy(pixels + y2 * width * comp, buffer, width * comp * sizeof(float));
+		y1++;
+		y2--;
+	}
+	delete [] buffer;
 }
 
 // helper function for tga
@@ -123,7 +460,7 @@ void imageSwapChannelsRB(u8 *pixels, int pixel_count, int comp) {
 	}
 }
 
-/* simplified tga image loader */
+/* simplified TGA image loader (loads only a minimal subset) */
 enum TargaColorType {
 	TARGA_COLOR_TYPE_TRUECOLOR, // 0
 	TARGA_COLOR_TYPE_INDEXED // 1
