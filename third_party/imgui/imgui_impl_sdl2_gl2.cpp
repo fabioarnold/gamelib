@@ -5,7 +5,7 @@
 // https://github.com/ocornut/imgui
 
 #include "imgui.h"
-#include "imgui_impl_sdl_gl2.h"
+#include "imgui_impl_sdl2_gl2.h"
 
 // SDL
 #include <SDL.h>
