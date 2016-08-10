@@ -45,3 +45,34 @@ char *readStringFromFile(const char *filepath, int *str_len) {
 
 	return str;
 }
+
+bool writeDataToFile(const char *filepath, u8 *data, size_t data_size) {
+	FILE *file = fopen(filepath, "wb");
+	if (!file) {
+		LOGE("Couldn't read %s", filepath);
+		return false;
+	}
+
+	fwrite(data, sizeof(u8), data_size, file);
+	fclose(file);
+
+	return true;
+}
+
+// returns true if successful
+// if str_len is 0 str is assumed to be 0 terminated and str_len will be calculated
+bool writeStringToFile(const char *filepath, char *str, size_t str_len) {
+	FILE *file = fopen(filepath, "w");
+	if (!file) {
+		LOGE("Couldn't read %s", filepath);
+		return false;
+	}
+	if (!str_len) str_len = strlen(str);
+
+	fwrite(str, sizeof(char), str_len, file);
+	char zero = 0;
+	fwrite(&zero, sizeof(char), 1, file);
+	fclose(file);
+
+	return true;
+}
