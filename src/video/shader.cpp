@@ -1,4 +1,4 @@
-Shader::Shader() : _program(0), _vert_shader(0), _frag_shader(0) {
+Shader::Shader() : _vert_shader(0), _frag_shader(0), _program(0) {
 }
 
 void Shader::free() {
