@@ -23,6 +23,7 @@ struct DebugRenderer {
 
 	void init();
 	void render(mat4 view_proj_mat); // renders all the draw calls
+	void destroy();
 
 	vec4 _color;
 

@@ -71,6 +71,11 @@ void DebugRenderer::init() {
 	_batch_count = 0;
 }
 
+void DebugRenderer::destroy() {
+	_shader.free();
+	tex_shader.free();
+}
+
 void DebugRenderer::setColor(float r, float g, float b, float a) {
 	_color.r = r;
 	_color.g = g;
