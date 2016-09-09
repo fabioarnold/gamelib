@@ -47,7 +47,7 @@ struct DDSHeader {
 
 	DDSPixelFormat pf;
 	u32 caps[4];
-	
+
 	u32 texture_stage;
 };
 
@@ -91,8 +91,8 @@ GLuint loadCompressedTexture2D(const char *filepath, int *out_width, int *out_he
 	int width = header->width;
 	int height = header->height;
 	int offset = sizeof(DDSHeader);
-	for (int level = 0; level < header->mipmap_count; level++) {
-		int size = block_size * ((width+3)/4)*((height+3)/4);
+	for (u32 level = 0; level < header->mipmap_count; level++) {
+	 	int size = block_size * ((width+3)/4)*((height+3)/4);
 		glCompressedTexImage2D(GL_TEXTURE_2D, level, internal_format, width, height, 0, size, data+offset);
 		offset += size;
 		if (width > 1) width /= 2;

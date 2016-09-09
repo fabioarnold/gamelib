@@ -217,7 +217,7 @@ void DebugRenderer::render(mat4 view_proj_mat) {
 	bool using_texture = _batch_count > 0 && _batches[0].texture != 0;
 	for (int ib = 0; ib < _batch_count; ib++) {
 		DebugRenderBatch *b = _batches+ib;
-		if (using_texture != b->texture != 0) {
+		if (using_texture != (b->texture != 0)) {
 			using_texture = b->texture != 0;
 			if (using_texture) {
 				tex_shader.use();
