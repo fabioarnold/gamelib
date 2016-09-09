@@ -399,10 +399,32 @@ void ImGui_ImplSdlGL2_NewFrame()
 
 	ImGuiIO& io = ImGui::GetIO();
 
-	// Setup display size (every frame to accommodate for window resizing)
+	Uint32 windowFlags = SDL_GetWindowFlags(g_Window);
+	/*
+	currently SDL_WINDOW_ALLOW_HIGHDPI only doubles pixels on apple platforms
+	this will copy the behavior for other platforms
+	*/
+	int sdl_pixel_size = 1;
+#ifndef __APPLE__
+	if (windowFlags & SDL_WINDOW_ALLOW_HIGHDPI) {
+		float dpi;
+		SDL_GetDisplayDPI(0, &dpi, nullptr, nullptr);
+		if (dpi > 1.5f * 72.0f) {
+			sdl_pixel_size = 2;
+		}
+	}
+#endif
 	int window_w, window_h;
-	int drawable_w, drawable_h;
 	SDL_GetWindowSize(g_Window, &window_w, &window_h);
+	window_w /= sdl_pixel_size;
+	window_h /= sdl_pixel_size;
+	int mx, my;
+	Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
+	mx /= sdl_pixel_size;
+	my /= sdl_pixel_size;
+
+	// Setup display size (every frame to accommodate for window resizing)
+	int drawable_w, drawable_h;
 	SDL_GL_GetDrawableSize(g_Window, &drawable_w, &drawable_h);
 	io.DisplaySize = ImVec2((float)window_w, (float)window_h);
 	if (drawable_w != window_w || drawable_h != window_h) {
@@ -419,9 +441,7 @@ void ImGui_ImplSdlGL2_NewFrame()
 
 	// Setup inputs
 	// (we already got mouse wheel, keyboard keys & characters from glfw callbacks polled in glfwPollEvents())
-	int mx, my;
-	Uint32 mouseMask = SDL_GetMouseState(&mx, &my);
-	if (SDL_GetWindowFlags(g_Window) & SDL_WINDOW_MOUSE_FOCUS)
+	if (windowFlags & SDL_WINDOW_MOUSE_FOCUS)
 		io.MousePos = ImVec2((float)mx, (float)my);   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
 	else
 		io.MousePos = ImVec2(-1, -1);
