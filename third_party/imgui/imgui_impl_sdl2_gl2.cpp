@@ -20,6 +20,8 @@
 	#include <SDL_opengl_glext.h>
 #endif
 
+#define IMGUI_USE_VBO 0
+
 struct MyImTexture {
 	GLenum target;
 	GLuint id;
@@ -38,7 +40,9 @@ static int          g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
 static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_AttribLocationColor = 0;
 static int          g_CubeAttribLocationTex = 0, g_CubeAttribLocationProjMtx = 0;
 static int          g_CubeAttribLocationPosition = 0, g_CubeAttribLocationUV = 0, g_CubeAttribLocationColor = 0;
+#if IMGUI_USE_VBO
 static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
+#endif
 
 // This is the main rendering function that you have to implement and provide to ImGui (via setting up 'RenderDrawListsFn' in the ImGuiIO structure)
 // If text or lines are blurry when integrating ImGui in your engine:
@@ -48,8 +52,10 @@ void ImGui_ImplSdlGL2_RenderDrawLists(ImDrawData* draw_data)
 	// Backup GL state
 	GLint last_program; glGetIntegerv(GL_CURRENT_PROGRAM, &last_program);
 	GLint last_texture; glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+#if IMGUI_USE_VBO
 	GLint last_array_buffer; glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
 	GLint last_element_array_buffer; glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &last_element_array_buffer);
+#endif
 	//GLint last_blend_src; glGetIntegerv(GL_BLEND_SRC, &last_blend_src);
 	//GLint last_blend_dst; glGetIntegerv(GL_BLEND_DST, &last_blend_dst);
 	//GLint last_blend_equation_rgb; glGetIntegerv(GL_BLEND_EQUATION_RGB, &last_blend_equation_rgb);
@@ -90,18 +96,19 @@ void ImGui_ImplSdlGL2_RenderDrawLists(ImDrawData* draw_data)
 	glUseProgram(g_ShaderHandle);
 	glUniform1i(g_AttribLocationTex, 0);
 	glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
-	// setup vertex format
 
-	glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
+	// setup vertex format
 	glEnableVertexAttribArray(g_AttribLocationPosition);
 	glEnableVertexAttribArray(g_AttribLocationUV);
 	glEnableVertexAttribArray(g_AttribLocationColor);
 
 #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+#if IMGUI_USE_VBO
+	glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
+
 	glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos));
 	glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv));
 	glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
-#undef OFFSETOF
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -132,16 +139,52 @@ void ImGui_ImplSdlGL2_RenderDrawLists(ImDrawData* draw_data)
 			idx_buffer_offset += pcmd->ElemCount;
 		}
 	}
+#else
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	for (int n = 0; n < draw_data->CmdListsCount; n++)
+	{
+		const ImDrawList* cmd_list = draw_data->CmdLists[n];
+		const ImDrawVert* vtx_buffer = cmd_list->VtxBuffer.Data;
+		const ImDrawIdx* idx_buffer = cmd_list->IdxBuffer.Data;
 
+		glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (void*)((char*)vtx_buffer + OFFSETOF(ImDrawVert, pos)));
+		glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (void*)((char*)vtx_buffer + OFFSETOF(ImDrawVert, uv)));
+		glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (void*)((char*)vtx_buffer + OFFSETOF(ImDrawVert, col)));
+
+		for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+		{
+			const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+			if (pcmd->UserCallback)
+			{
+				pcmd->UserCallback(cmd_list, pcmd);
+			}
+			else
+			{
+				MyImTexture *texture = (MyImTexture*)(pcmd->TextureId);
+				if (texture->target == GL_TEXTURE_CUBE_MAP) glUseProgram(g_CubeShaderHandle);
+				glBindTexture(texture->target, texture->id);
+				glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+				glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer);
+				if (texture->target == GL_TEXTURE_CUBE_MAP) glUseProgram(g_ShaderHandle);
+			}
+			idx_buffer += pcmd->ElemCount;
+		}
+	}
+#endif
 	glDisableVertexAttribArray(g_AttribLocationPosition);
 	glDisableVertexAttribArray(g_AttribLocationUV);
 	glDisableVertexAttribArray(g_AttribLocationColor);
+#undef OFFSETOF
 
 	// Restore modified GL state
 	glUseProgram(last_program);
 	glBindTexture(GL_TEXTURE_2D, last_texture);
+#if IMGUI_USE_VBO
 	glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, last_element_array_buffer);
+#endif
 	//glBlendEquationSeparate(last_blend_equation_rgb, last_blend_equation_alpha);
 	//glBlendFunc(last_blend_src, last_blend_dst);
 	//if (last_enable_blend) glEnable(GL_BLEND); else glDisable(GL_BLEND);
@@ -232,7 +275,9 @@ bool ImGui_ImplSdlGL2_CreateDeviceObjects()
 	// Backup GL state
 	GLint last_texture, last_array_buffer, last_vertex_array;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
+#if IMGUI_USE_VBO
 	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
+#endif
 
 	const GLchar *vertex_shader =
 		"uniform mat4 ProjMtx;\n"
@@ -315,52 +360,58 @@ bool ImGui_ImplSdlGL2_CreateDeviceObjects()
 	g_CubeAttribLocationUV = glGetAttribLocation(g_CubeShaderHandle, "UV");
 	g_CubeAttribLocationColor = glGetAttribLocation(g_CubeShaderHandle, "Color");
 
+#if IMGUI_USE_VBO
 	glGenBuffers(1, &g_VboHandle);
 	glGenBuffers(1, &g_ElementsHandle);
+#endif
 
 	ImGui_ImplSdlGL2_CreateFontsTexture();
 
 	// Restore modified GL state
 	glBindTexture(GL_TEXTURE_2D, last_texture);
+#if IMGUI_USE_VBO
 	glBindBuffer(GL_ARRAY_BUFFER, last_array_buffer);
+#endif
 
 	return true;
 }
 
 void    ImGui_ImplSdlGL2_InvalidateDeviceObjects()
 {
-    if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
-    if (g_ElementsHandle) glDeleteBuffers(1, &g_ElementsHandle);
-    g_VboHandle = g_ElementsHandle = 0;
+#if IMGUI_USE_VBO
+	if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
+	if (g_ElementsHandle) glDeleteBuffers(1, &g_ElementsHandle);
+	g_VboHandle = g_ElementsHandle = 0;
+#endif
 
-    glDetachShader(g_ShaderHandle, g_VertHandle);
-    glDetachShader(g_ShaderHandle, g_FragHandle);
+	glDetachShader(g_ShaderHandle, g_VertHandle);
+	glDetachShader(g_ShaderHandle, g_FragHandle);
 
-    glDetachShader(g_CubeShaderHandle, g_VertHandle);
-    glDetachShader(g_CubeShaderHandle, g_CubeFragHandle);
+	glDetachShader(g_CubeShaderHandle, g_VertHandle);
+	glDetachShader(g_CubeShaderHandle, g_CubeFragHandle);
 
-    glDeleteShader(g_VertHandle);
-    g_VertHandle = 0;
+	glDeleteShader(g_VertHandle);
+	g_VertHandle = 0;
 
-    glDeleteShader(g_FragHandle);
-    g_FragHandle = 0;
+	glDeleteShader(g_FragHandle);
+	g_FragHandle = 0;
 
-    glDeleteShader(g_CubeFragHandle);
-    g_CubeFragHandle = 0;
+	glDeleteShader(g_CubeFragHandle);
+	g_CubeFragHandle = 0;
 
-    glDeleteProgram(g_ShaderHandle);
-    g_ShaderHandle = 0;
+	glDeleteProgram(g_ShaderHandle);
+	g_ShaderHandle = 0;
 
-    glDeleteProgram(g_CubeShaderHandle);
-    g_CubeShaderHandle = 0;
+	glDeleteProgram(g_CubeShaderHandle);
+	g_CubeShaderHandle = 0;
 
 
-    if (g_FontTexture.id)
-    {
-        glDeleteTextures(1, &g_FontTexture.id);
-        ImGui::GetIO().Fonts->TexID = 0;
-        g_FontTexture.id = 0;
-    }
+	if (g_FontTexture.id)
+	{
+		glDeleteTextures(1, &g_FontTexture.id);
+		ImGui::GetIO().Fonts->TexID = 0;
+		g_FontTexture.id = 0;
+	}
 }
 
 bool    ImGui_ImplSdlGL2_Init(SDL_Window *window)
@@ -469,3 +520,5 @@ void ImGui_ImplSdlGL2_NewFrame()
 	// Start the frame
 	ImGui::NewFrame();
 }
+
+#undef IMGUI_USE_VBO
