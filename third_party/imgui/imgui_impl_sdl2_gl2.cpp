@@ -140,9 +140,6 @@ void ImGui_ImplSdlGL2_RenderDrawLists(ImDrawData* draw_data)
 		}
 	}
 #else
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
 		const ImDrawList* cmd_list = draw_data->CmdLists[n];
@@ -273,9 +270,10 @@ void ImGui_ImplSdlGL2_CreateFontsTexture()
 bool ImGui_ImplSdlGL2_CreateDeviceObjects()
 {
 	// Backup GL state
-	GLint last_texture, last_array_buffer, last_vertex_array;
+	GLint last_texture;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
 #if IMGUI_USE_VBO
+	GLint last_array_buffer;
 	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &last_array_buffer);
 #endif
 
