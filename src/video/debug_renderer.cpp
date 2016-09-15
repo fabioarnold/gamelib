@@ -72,6 +72,8 @@ void DebugRenderer::init() {
 }
 
 void DebugRenderer::destroy() {
+	glDeleteBuffers(1, &_vbo);
+	_vbo = 0;
 	_shader.free();
 	tex_shader.free();
 }

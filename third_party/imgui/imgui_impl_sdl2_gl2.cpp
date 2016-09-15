@@ -75,7 +75,7 @@ void ImGui_ImplSdlGL2_RenderDrawLists(ImDrawData* draw_data)
 	draw_data->ScaleClipRects(io.DisplayFramebufferScale);
 
 	// Setup orthographic projection matrix
-    glViewport(0, 0, (GLsizei)(io.DisplayFramebufferScale.x*io.DisplaySize.x), (GLsizei)(io.DisplayFramebufferScale.y*io.DisplaySize.y));
+	glViewport(0, 0, (GLsizei)(io.DisplayFramebufferScale.x*io.DisplaySize.x), (GLsizei)(io.DisplayFramebufferScale.y*io.DisplaySize.y));
 	const float ortho_projection[4][4] =
 	{
 		{ 2.0f/io.DisplaySize.x, 0.0f,                   0.0f, 0.0f },
@@ -397,7 +397,7 @@ bool    ImGui_ImplSdlGL2_Init(SDL_Window *window)
 
 void ImGui_ImplSdlGL2_Shutdown()
 {
-    ImGui_ImplSdlGL2_InvalidateDeviceObjects();
+	ImGui_ImplSdlGL2_InvalidateDeviceObjects();
 	ImGui::Shutdown();
 }
 

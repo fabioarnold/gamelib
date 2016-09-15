@@ -362,21 +362,45 @@ MDLModel::MDLModel() :
 	meshes(NULL),
 	index_buffer(0) {}
 
-void MDLModel::free() {
-	ARRAY_FREE(nodes);
-	ARRAY_FREE(bones);
-	ARRAY_FREE(bone_poses);
-	ARRAY_FREE(bone_mats)
-	ARRAY_FREE(actions);
-	ARRAY_FREE(textures);
-	ARRAY_FREE(vertex_arrays);
-	ARRAY_FREE(meshes);
+void MDLModel::destroy() {
+	for (int i = 0; i < vertex_array_count; i++) {
+		if (vertex_arrays[i].vertex_buffer) {
+			glDeleteBuffers(1, &vertex_arrays[i].vertex_buffer);
+			vertex_arrays[i].vertex_buffer = 0;
+		}
+	}
+
+	glDeleteTextures(texture_count, textures);
+	memset(textures, 0, sizeof(GLuint)*texture_count);
 
 	if (index_buffer) {
 		glDeleteBuffers(1, &index_buffer);
 		index_buffer = 0;
 	}
-	shader.free();
+
+	shader.destroy();
+}
+
+void MDLModel::free() {
+	ARRAY_FREE(nodes);
+	node_count = 0;
+
+	ARRAY_FREE(bones);
+	ARRAY_FREE(bone_poses);
+	ARRAY_FREE(bone_mats)
+	bone_count = 0;
+
+	ARRAY_FREE(actions);
+	action_count = 0;
+
+	ARRAY_FREE(vertex_arrays);
+	vertex_array_count = 0;
+
+	ARRAY_FREE(textures);
+	texture_count = 0;
+
+	ARRAY_FREE(meshes);
+	mesh_count = 0;
 }
 
 void MDLModel::load(const char *filepath) {

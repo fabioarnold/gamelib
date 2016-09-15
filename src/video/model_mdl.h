@@ -142,7 +142,8 @@ struct MDLModel {
 
 	MDLModel();
 	void load(const char *filepath); // TODO: switch to memory arena
-	void free();
+	void destroy(); // deletes OpenGL objects
+	void free(); // frees all memory (including GL objs)
 
 	int getBoneIndexByName(const char *bone_name); // returns -1 when bone could not be found
 
