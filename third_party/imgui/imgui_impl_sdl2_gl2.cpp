@@ -9,13 +9,16 @@
 
 // SDL
 #include <SDL.h>
-#ifndef __APPLE__
+#ifdef USE_GLEW
 	#include <GL/glew.h>
 #endif
-//#include <SDL_syswm.h>
-#define GL_GLEXT_PROTOTYPES
-#include <SDL_opengl.h>
-#include <SDL_opengl_glext.h>
+#ifdef USE_OPENGLES
+	#include <SDL_opengles.h>
+#else
+	#define GL_GLEXT_PROTOTYPES
+	#include <SDL_opengl.h>
+	#include <SDL_opengl_glext.h>
+#endif
 
 struct MyImTexture {
 	GLenum target;
