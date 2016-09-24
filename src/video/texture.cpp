@@ -97,6 +97,23 @@ GLuint loadTexture2D(float *pixels, int width, int height, int comp, bool build_
 	}
 	setWrapTexture2D(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
+#if 0 // test expand code
+	u64 t = SDL_GetPerformanceCounter();
+		int expand_level = 4;
+		for (int level = 0; level < expand_level; level++) {
+			imageReduce(pixels, width, height, comp);
+			width  /= 2;
+			height /= 2;
+		}
+		for (int level = 0; level < expand_level; level++) {
+			imageExpand(pixels, width, height, comp);
+			width  *= 2;
+			height *= 2;
+		}
+	t = SDL_GetPerformanceCounter() - t;
+	LOGI("%llu ns", t);
+#endif
+
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height,
 		0, format, GL_FLOAT, pixels);
 #ifdef DEBUG
@@ -109,7 +126,12 @@ GLuint loadTexture2D(float *pixels, int width, int height, int comp, bool build_
 	// mipmap building
 	if (build_mipmaps) {
 		for (int mipmap_level = 1; width > 1 && height > 1; mipmap_level++) {
-			imageHalve(pixels, width, height, comp);
+			#if 0
+			if (width > 2 && height > 2)
+				imageReduce(pixels, width, height, comp);
+			else
+			#endif
+				imageHalve(pixels, width, height, comp);
 			width  /= 2;
 			height /= 2;
 			glTexImage2D(GL_TEXTURE_2D, mipmap_level, internal_format,
@@ -317,7 +339,7 @@ GLuint loadTextureCubeCross(const char *filepath, bool build_mipmaps, int *out_s
 	if (!strncmp(ext, ".hdr", 4)) {
 		int out_width, out_height;
 		float *pixels = stbi_loadf(filepath, &out_width, &out_height, &comp, 0);
-		*out_size = out_width/3;
+		if (out_size) *out_size = out_width/3;
 		if (pixels) {
 			GLuint texture = loadTextureCubeCross(pixels, out_width, out_height, comp, build_mipmaps);
 			stbi_image_free(pixels);
@@ -328,7 +350,7 @@ GLuint loadTextureCubeCross(const char *filepath, bool build_mipmaps, int *out_s
 	} else {
 		int out_width, out_height;
 		u8 *pixels = stbi_load(filepath, &out_width, &out_height, &comp, 0);
-		*out_size = out_width/3;
+		if (out_size) *out_size = out_width/3;
 		if (pixels) {
 			GLuint texture = loadTextureCubeCross(pixels, out_width, out_height, comp, build_mipmaps);
 			stbi_image_free(pixels);
@@ -342,126 +364,6 @@ GLuint loadTextureCubeCross(const char *filepath, bool build_mipmaps, int *out_s
 #endif
 
 	return 0;
-}
-
-// image functions
-
-void imageCopyPixels(u8 *dest, u8 *src, int dest_width, int src_width, int comp, int line_width, int num_lines) {
-	while (num_lines-- > 0) {
-		memcpy(dest, src, line_width * comp * sizeof(u8));
-		dest += dest_width * comp;
-		src += src_width * comp;
-	}
-}
-
-void imageHalve(u8 *pixels, int width, int height, int comp) {
-	assert(width > 1 && height > 1);
-	int half_width = width / 2;
-	int half_height = height / 2;
-	for (int y = 0; y < half_height; y++) {
-		for (int x = 0; x < half_width; x++) {
-			u8 *dst_pixel = pixels+((y*half_width + x) * comp);
-			for (int ci = 0; ci < comp; ci++) {
-				u16 c = pixels[((2*y+0)*width + (2*x+0))*comp + ci]
-					  + pixels[((2*y+0)*width + (2*x+1))*comp + ci]
-					  + pixels[((2*y+1)*width + (2*x+0))*comp + ci]
-					  + pixels[((2*y+1)*width + (2*x+1))*comp + ci];
-				dst_pixel[ci] = (u8)(c/4);
-			}
-		}
-	}
-}
-
-void imageFlipHorizontally(u8 *pixels, int width, int height, int comp) {
-	u8 *buffer = new u8[comp];
-	for (int y = 0; y < height; y++) {
-		int x1 = 0, x2 = width-1;
-		while (x1 < x2) {
-			memcpy(buffer, pixels + (y * width + x1) * comp, comp * sizeof(u8));
-			memcpy(pixels + (y * width + x1) * comp, pixels + (y * width + x2) * comp, comp * sizeof(u8));
-			memcpy(pixels + (y * width + x2) * comp, buffer, comp * sizeof(u8));
-			x1++;
-			x2--;
-		}
-	}
-	delete [] buffer;
-}
-
-void imageFlipVertically(u8 *pixels, int width, int height, int comp) {
-	u8 *buffer = new u8[width * comp];
-	int y1 = 0, y2 = height - 1;
-	while (y1 < y2) {
-		memcpy(buffer, pixels + y1 * width * comp, width * comp * sizeof(u8));
-		memcpy(pixels + y1 * width * comp, pixels + y2 * width * comp, width * comp * sizeof(u8));
-		memcpy(pixels + y2 * width * comp, buffer, width * comp * sizeof(u8));
-		y1++;
-		y2--;
-	}
-	delete [] buffer;
-}
-
-void imageCopyPixels(float *dest, float *src, int dest_width, int src_width, int comp, int line_width, int num_lines) {
-	while (num_lines-- > 0) {
-		memcpy(dest, src, line_width * comp * sizeof(float));
-		dest += dest_width * comp;
-		src += src_width * comp;
-	}
-}
-
-void imageHalve(float *pixels, int width, int height, int comp) {
-	assert(width > 1 && height > 1);
-	int half_width = width / 2;
-	int half_height = height / 2;
-	for (int y = 0; y < half_height; y++) {
-		for (int x = 0; x < half_width; x++) {
-			float *dst_pixel = pixels+((y*half_width + x) * comp);
-			for (int ci = 0; ci < comp; ci++) {
-				float c = pixels[((2*y+0)*width + (2*x+0))*comp + ci]
-						+ pixels[((2*y+0)*width + (2*x+1))*comp + ci]
-						+ pixels[((2*y+1)*width + (2*x+0))*comp + ci]
-						+ pixels[((2*y+1)*width + (2*x+1))*comp + ci];
-				dst_pixel[ci] = (float)(c*0.25f);
-			}
-		}
-	}
-}
-
-void imageFlipHorizontally(float *pixels, int width, int height, int comp) {
-	float *buffer = new float[comp];
-	for (int y = 0; y < height; y++) {
-		int x1 = 0, x2 = width-1;
-		while (x1 < x2) {
-			memcpy(buffer, pixels + (y * width + x1) * comp, comp * sizeof(float));
-			memcpy(pixels + (y * width + x1) * comp, pixels + (y * width + x2) * comp, comp * sizeof(float));
-			memcpy(pixels + (y * width + x2) * comp, buffer, comp * sizeof(float));
-			x1++;
-			x2--;
-		}
-	}
-	delete [] buffer;
-}
-
-void imageFlipVertically(float *pixels, int width, int height, int comp) {
-	float *buffer = new float[width * comp];
-	int y1 = 0, y2 = height - 1;
-	while (y1 < y2) {
-		memcpy(buffer, pixels + y1 * width * comp, width * comp * sizeof(float));
-		memcpy(pixels + y1 * width * comp, pixels + y2 * width * comp, width * comp * sizeof(float));
-		memcpy(pixels + y2 * width * comp, buffer, width * comp * sizeof(float));
-		y1++;
-		y2--;
-	}
-	delete [] buffer;
-}
-
-// helper function for tga
-void imageSwapChannelsRB(u8 *pixels, int pixel_count, int comp) {
-	while (pixel_count-->0) {
-		u8 blue = pixels[0];
-		pixels[0] = pixels[2];
-		pixels[2] = blue;
-		pixels += comp;
-	}
 }
 
 /* simplified TGA image loader (loads only a minimal subset) */
@@ -534,7 +436,9 @@ GLuint loadTexture2DTGA(const char* filepath, bool build_mipmaps, int *out_width
 	// targa has pixels stored in the order BGRA but gles needs RGBA
 	if (comp >= 3) imageSwapChannelsRB(pixels, width*height, comp);
 
+	//float *pixelsf = imageFloat(pixels, width*height*comp);
 	GLuint texture = loadTexture2D(pixels, width, height, comp, build_mipmaps);
+	//delete [] pixelsf;
 
 	delete [] data;
 
