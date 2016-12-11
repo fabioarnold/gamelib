@@ -98,16 +98,49 @@ struct Keyboard {
 
 private:
 	ButtonState *bindings[512]; // can be bound to any ButtonState
-} keyboard;
+} keyboard; // only one keyboard
 
-#if 0
-#define MAX_GAMEPAD_COUNT 4
 struct Gamepad {
-	bool available; // true when plugged in
+	bool plugged_in = false;
+	bool active = false; // any button has been pressed
+	const char *name;
 
-	int num_buttons;
+	void beginFrame() {
+		for (size_t i = 0; i < ARRAY_COUNT(button_bindings); i++) {
+			if (button_bindings[i]) button_bindings[i]->beginFrame();
+		}
+	}
 
-	vec2 sticks[2];
-	ButtonState buttons[12];
-} gamepads[MAX_GAMEPAD_COUNT];
-#endif
+	void bindButton(int button_idx, ButtonState *virt_button) {
+		assert(button_idx >= 0 && button_idx < (int)ARRAY_COUNT(button_bindings));
+		button_bindings[button_idx] = virt_button;
+	}
+
+	// call this on joystick button event
+	void onButton(int button_idx, bool button_state) {
+		if (button_idx >= 0 && button_idx < (int)ARRAY_COUNT(button_bindings)) {
+			if (button_bindings[button_idx]) {
+				button_bindings[button_idx]->setState(button_state);
+			} else {
+				active = true;
+			}
+		}
+	}
+
+	void bindAxis(int axis_idx, float *virt_axis) {
+		assert(axis_idx >= 0 && axis_idx < (int)ARRAY_COUNT(axis_bindings));
+		axis_bindings[axis_idx] = virt_axis;
+	}
+
+	void onAxis(int axis_idx, float axis_value) {
+		if (axis_idx >= 0 && axis_idx < (int)ARRAY_COUNT(axis_bindings)) {
+			if (axis_bindings[axis_idx]) {
+				*axis_bindings[axis_idx] = axis_value;
+			}
+		}
+	}
+
+private:
+	float *axis_bindings[8];
+	ButtonState *button_bindings[32];
+} gamepads[8];
