@@ -109,6 +109,13 @@ inline vec3 v3(vec2 v) {
 	result.z = 0.0f;
 	return result;
 }
+inline vec3 v3(vec2 v, float z) {
+	vec3 result;
+	result.x = v.x;
+	result.y = v.y;
+	result.z = z;
+	return result;
+}
 inline vec3 v3(vec4 v) {
 	vec3 result;
 	result.x = v.x;
