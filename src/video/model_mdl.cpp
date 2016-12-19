@@ -611,6 +611,12 @@ void MDLModel::draw(mat4 view_proj_mat) {
 			glDrawElements(GL_TRIANGLES, batch->index_count, GL_UNSIGNED_SHORT, (GLvoid*)(batch->index_offset*sizeof(u16)));
 		}
 	}
+
+	if (prev_vertex_format != -1) {
+		MDLVertexArray *vertex_array = vertex_arrays+prev_vertex_format;
+		vertex_array->format.disable();
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
