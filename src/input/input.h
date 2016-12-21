@@ -144,3 +144,19 @@ private:
 	float *axis_bindings[8];
 	ButtonState *button_bindings[32];
 } gamepads[8];
+
+/* axis helper functions */
+
+// normalized direction of axis, considers dead zone
+vec2 getAxisDirection(vec2 axis, float dead_zone = 0.1f) {
+	return length(axis) < dead_zone ? v2(0.0f) : normalize(axis);
+}
+
+// axis with length in range of 0.0f to 1.0f, considers dead zone
+vec2 getAxisScaled(vec2 axis, float dead_zone = 0.1f) {
+	float len = length(axis);
+	if (len < dead_zone) return v2(0.0f);
+	if (len > 1.0f) return axis / len; // normalized
+	float scale = (len - dead_zone) / (1.0f - dead_zone);
+	return scale * axis;
+}
