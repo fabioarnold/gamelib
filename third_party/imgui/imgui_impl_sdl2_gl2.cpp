@@ -191,12 +191,12 @@ void ImGui_ImplSdlGL2_RenderDrawLists(ImDrawData* draw_data)
     glViewport(last_viewport[0], last_viewport[1], (GLsizei)last_viewport[2], (GLsizei)last_viewport[3]);
 }
 
-static const char* ImGui_ImplSdlGL2_GetClipboardText()
+static const char* ImGui_ImplSdlGL2_GetClipboardText(void*)
 {
 	return SDL_GetClipboardText();
 }
 
-static void ImGui_ImplSdlGL2_SetClipboardText(const char* text)
+static void ImGui_ImplSdlGL2_SetClipboardText(void*, const char* text)
 {
 	SDL_SetClipboardText(text);
 }
