@@ -1,3 +1,5 @@
+#include "system/defines.h"
+
 void imageCopyPixels(u8 *dest, u8 *src, int dest_width, int src_width, int comp, int line_width, int num_lines);
 void imageHalve(u8 *pixels, int width, int height, int comp);
 void imageFlipHorizontally(u8 *pixels, int width, int height, int comp);

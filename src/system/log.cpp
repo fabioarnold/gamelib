@@ -1,3 +1,9 @@
+#include "system/log.h"
+
+#include <ctime>
+#include <cstdio>
+#include <cstdarg>
+
 static void getTimeStamp(char *buffer, size_t size) {
 	time_t rawtime;
 	time(&rawtime);

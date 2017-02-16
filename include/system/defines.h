@@ -17,17 +17,9 @@ union IntFloat {
 	float f;
 };
 
-#define ARRAY_COUNT(array) (sizeof(array) / sizeof((array)[0]))
+#define ARRAY_COUNT(a) (sizeof(a) / sizeof((a)[0]))
 #define ARRAY_FREE(a) if (!(a)) {delete [] (a); (a) = NULL;}
 
 bool isPowerOfTwo(u32 i) {
 	return (i != 0) && !(i & (i-1));
-}
-
-int imin(int i0, int i1) {
-	return i0 < i1 ? i0 : i1;
-}
-
-int imax(int i0, int i1) {
-	return i0 > i1 ? i0 : i1;
 }

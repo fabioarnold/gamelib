@@ -1,3 +1,8 @@
+#include "video/image.h"
+
+#include <cassert>
+#include <cstring>
+
 #define COORDS(X,Y) (((Y)*width + (X))*comp)
 
 void imageCopyPixels(u8 *dst, u8 *src, int dst_width, int src_width, int comp, int line_width, int num_lines) {

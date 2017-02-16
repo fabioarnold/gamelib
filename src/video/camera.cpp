@@ -1,3 +1,5 @@
+#include "video/camera.h"
+
 void Camera::updateProjectionMatrix() {
 	float near = 0.1f;
 	float far = 100.0f;

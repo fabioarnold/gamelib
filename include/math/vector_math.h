@@ -16,6 +16,9 @@ Contra:
 - human-readable access pattern is inefficient (row-major)
 */
 
+#include <cassert>
+#include <cmath>
+
 union vec2 {
 	struct {float x, y;};
 	float e[2];

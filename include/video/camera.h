@@ -1,3 +1,7 @@
+#include "math/vector_math.h"
+
+#include "video/video_mode.h"
+
 struct Camera {
 	float aspect_ratio;
 	float field_of_view;

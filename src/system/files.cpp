@@ -1,3 +1,10 @@
+#include "system/files.h"
+
+#include <cassert>
+#include <cstring>
+
+#include "system/log.h"
+
 size_t getFileSize(FILE *opened_file) {
 	fseek(opened_file, 0, SEEK_END);
 	size_t file_size = ftell(opened_file);
