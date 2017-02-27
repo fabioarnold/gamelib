@@ -7,6 +7,8 @@ struct BFVertex {
 
 struct BitmapFont {
 	void init();
+	void destroy();
+
 	void drawText(const char *text, int x, int y);
 	int getTextWidth(const char *text);
 
