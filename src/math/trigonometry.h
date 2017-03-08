@@ -15,7 +15,12 @@ vec2 dirFromAngle(float angle) {
 	return v2(cosf(angle), sinf(angle));
 }
 
-float mixAngles(float v0, float v1, float a) {
-	float delta = wrapMPi(v1 - v0);
-	return wrapMPi(v0 + a*delta);
+float mixAngles(float a0, float a1, float alpha) {
+	float delta = wrapMPi(a1 - a0);
+	return wrapMPi(a0 + alpha*delta);
+}
+
+bool areAnglesEqual(float a0, float a1, float epsilon) {
+	float delta = wrapMPi(a1 - a0);
+	return fabsf(delta) < epsilon;
 }
