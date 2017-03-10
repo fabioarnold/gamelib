@@ -31,3 +31,11 @@ int imin(int i0, int i1) {
 int imax(int i0, int i1) {
 	return i0 > i1 ? i0 : i1;
 }
+
+float fmin(float f0, float f1) {
+	return f0 < f1 ? f0 : f1;
+}
+
+float fmax(float f0, float f1) {
+	return f0 > f1 ? f0 : f1;
+}
