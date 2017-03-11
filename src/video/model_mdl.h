@@ -135,6 +135,7 @@ struct MDLModel {
 	GLuint index_buffer;
 	Shader shader; // TODO: make this a reference (also multiple shader per vertex array/material)
 	// cached uniform locations
+	GLint color_loc;
 	GLint mvp_loc;
 	GLint normal_mat_loc;
 	GLint bone_mats_loc;

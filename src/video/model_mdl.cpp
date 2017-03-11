@@ -138,6 +138,7 @@ char *generateFragmentShaderSource(MDLVertexFormat *vertex_format /* mat info */
 	if (vertex_format->attribs[VAT_TEXCOORD0].components_count) {
 		buffer << "uniform sampler2D colormap;" << std::endl;
 	}
+	buffer << "uniform vec4 u_color;" << std::endl;
 
 	// varyings
 	if (vertex_format->attribs[VAT_NORMAL].components_count) {
@@ -160,7 +161,7 @@ char *generateFragmentShaderSource(MDLVertexFormat *vertex_format /* mat info */
 	} else {
 		buffer << "\tvec4 color = vec4(1.0);" << std::endl;
 	}
-	buffer << "\tgl_FragColor = vec4(shading * color.rgb, color.a);" << std::endl;
+	buffer << "\tgl_FragColor = vec4(shading * color.rgb * u_color.rgb, color.a * u_color.a);" << std::endl;
 	buffer << "}" << std::endl;
 
 	// copy to zero terminated string
@@ -211,8 +212,15 @@ void loadMAT1Chunk(MDLModel *model, MDLMAT1Chunk *chunk) {
 	for (int ti = 0; ti < chunk->mat_count; ti++) {
 		// TODO: don't fetch textures multiple times
 		char filepath[256];
-		sprintf(filepath, "data/textures/%s", texture_filepaths);
-		model->textures[ti] = loadCompressedTexture2D(filepath, nullptr, nullptr);
+		// look in gfx folder
+		sprintf(filepath, "data/gfx/%s.tga", texture_filepaths);
+		if (access(filepath, R_OK) != -1) { // file exists
+			model->textures[ti] = loadTexture2D(filepath, false, nullptr, nullptr);
+		} else {
+			// might be a compressed texture
+			sprintf(filepath, "data/textures/%s", texture_filepaths);
+			model->textures[ti] = loadCompressedTexture2D(filepath, nullptr, nullptr);
+		}
 		texture_filepaths += 64;
 	}
 }
@@ -461,6 +469,8 @@ void MDLModel::load(const char *filepath) {
 	vertex_arrays[0].format.bindShaderAttribs(&shader);
 	shader.link();
 	shader.use();
+	color_loc = shader.getUniformLocation("u_color");
+	glUniform4f(color_loc, 1.0f, 1.0f, 1.0f, 1.0f); // white
 	mvp_loc = shader.getUniformLocation("mvp");
 	normal_mat_loc = shader.getUniformLocation("normal_mat");
 	bone_mats_loc = shader.getUniformLocation("bone_mats");
