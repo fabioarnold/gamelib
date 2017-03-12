@@ -1,9 +1,11 @@
-// TODO: use modulo for arbitrary values
 // wraps value to [-pi, pi]
 float wrapMPi(float angle) {
-	if (angle >  (float)M_PI) return angle - 2.0f * (float)M_PI;
-	if (angle < -(float)M_PI) return angle + 2.0f * (float)M_PI;
-	return angle;
+	static const float pi = (float)M_PI;
+	if (angle > 0.0f) {
+		return fmodf(angle + pi, 2.0f * pi) - pi;
+	} else {
+		return fmodf(angle - pi, 2.0f * pi) + pi;
+	}
 }
 
  // [-pi, pi]
