@@ -59,7 +59,7 @@ GLuint loadCompressedTexture2D(const char *filepath, int *out_width, int *out_he
 	u8 *data = readDataFromFile(filepath_dds, &data_size);
 	if (!data) return 0;
 
-	DDSHeader *header = (DDSHeader*)data;
+	DDSHeader *header = reinterpret_cast<DDSHeader*>(data);
 #ifdef DEBUG
 	if (header->fourcc != FOURCC_DDS) {
 		LOGE("magic number mismatch in \"%s\"\n", filepath_dds);

@@ -571,7 +571,7 @@ void printMatrix(mat3 m) {
 #ifdef DEBUG
 	for (int row = 0; row < 3; row++) {
 		for (int col = 0; col < 3; col++) {
-			printf("%.3f ", m.cols[col][row]);
+			printf("%.3f ", (double)m.cols[col][row]);
 		}
 		puts("");
 	}
@@ -581,7 +581,7 @@ void printMatrix(mat4 m) {
 #ifdef DEBUG
 	for (int row = 0; row < 4; row++) {
 		for (int col = 0; col < 4; col++) {
-			printf("%.3f ", m.cols[col][row]);
+			printf("%.3f ", (double)m.cols[col][row]);
 		}
 		puts("");
 	}

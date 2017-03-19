@@ -39,3 +39,7 @@ float fmin(float f0, float f1) {
 float fmax(float f0, float f1) {
 	return f0 > f1 ? f0 : f1;
 }
+
+bool fequal(float f0, float f1, float eps = 0.001f) {
+	return fabsf(f1-f0) < eps;
+}

@@ -86,7 +86,7 @@ void DebugRenderer::setColor(float r, float g, float b, float a) {
 }
 
 bool operator!=(vec4 v0, vec4 v1) {
-	return v0.x != v1.x || v0.y != v1.y || v0.z != v1.z || v0.w != v1.w;
+	return !fequal(v0.x, v1.x) || !fequal(v0.y, v1.y) || !fequal(v0.z, v1.z) || !fequal(v0.w, v1.w);
 }
 
 void DebugRenderer::drawTriangle(vec3 v0, vec3 v1, vec3 v2) {

@@ -260,15 +260,15 @@ void loadACT1Chunk(MDLModel *model, MDLACT1Chunk *chunk) {
 		MDLAction *action = model->actions+ai;
 
 		memcpy(action->name, data+offset, 16);
-		action->frame_count = *(int*)(data+offset+offsetof(MDLAction, frame_count));
-		action->track_count = *(int*)(data+offset+offsetof(MDLAction, track_count));
+		action->frame_count = *reinterpret_cast<int*>(data+offset+offsetof(MDLAction, frame_count));
+		action->track_count = *reinterpret_cast<int*>(data+offset+offsetof(MDLAction, track_count));
 		offset += 24;
 
 		action->tracks = new MDLActionTrack[action->track_count];
 		for (int ti = 0; ti < action->track_count; ti++) {
 			MDLActionTrack *track = action->tracks+ti;
 
-			track->bone_index = *(int*)(data+offset);
+			track->bone_index = *reinterpret_cast<int*>(data+offset);
 			offset += sizeof(int);
 
 			track->bone_poses = new MDLBoneTransform[action->frame_count];
@@ -294,7 +294,7 @@ void loadVTX1Chunk(MDLModel *model, MDLVTX1Chunk *chunk) {
 
 		u8 *data = (u8*)chunk + offset;
 		memcpy(&va->format, data, sizeof(MDLVertexFormat));
-		int vertex_count = *(int*)(data+sizeof(MDLVertexFormat));
+		int vertex_count = *reinterpret_cast<int*>(data+sizeof(MDLVertexFormat));
 		size_t vertex_size = va->format.getSize();
 		GLsizeiptr vertex_data_size = (GLsizeiptr)vertex_count*(GLsizeiptr)vertex_size;
 		u8 *vertex_data = data+sizeof(MDLVertexFormat)+4;
@@ -312,6 +312,7 @@ struct MDLTRI1Chunk {
 	int mesh_count;
 };
 void loadTRI1Chunk(MDLModel *model, MDLTRI1Chunk *chunk) {
+	char *data;
 	model->meshes = new MDLMesh[chunk->mesh_count];
 	model->mesh_count = chunk->mesh_count;
 
@@ -319,10 +320,10 @@ void loadTRI1Chunk(MDLModel *model, MDLTRI1Chunk *chunk) {
 	for (int mi = 0; mi < chunk->mesh_count; mi++) {
 		MDLMesh *mesh = model->meshes+mi;
 
-		char *data = (char*)chunk + offset;
-		mesh->vertex_array_index = *(int*)data;
-		mesh->index_data_type = *(int*)(data+4);
-		mesh->batch_count = *(int*)(data+8);
+		data = (char*)chunk + offset;
+		mesh->vertex_array_index = *reinterpret_cast<int*>(data);
+		mesh->index_data_type = *reinterpret_cast<int*>(data+4);
+		mesh->batch_count = *reinterpret_cast<int*>(data+8);
 		mesh->batches = new MDLTriangleBatch[mesh->batch_count];
 
 		offset += 12;
@@ -330,16 +331,16 @@ void loadTRI1Chunk(MDLModel *model, MDLTRI1Chunk *chunk) {
 		for (int bi = 0; bi < mesh->batch_count; bi++) {
 			MDLTriangleBatch *batch = mesh->batches+bi;
 
-			char *data = (char*)chunk + offset;
-			batch->texture_index = *(int*)data;
-			batch->index_offset = *(int*)(data+4);
-			batch->index_count = *(int*)(data+8);
+			data = (char*)chunk + offset;
+			batch->texture_index = *reinterpret_cast<int*>(data);
+			batch->index_offset = *reinterpret_cast<int*>(data+4);
+			batch->index_count = *reinterpret_cast<int*>(data+8);
 
 			offset += 12;
 		}
 	}
-	char *data = (char*)chunk + offset;
-	int index_count = *(int*)data;
+	data = (char*)chunk + offset;
+	int index_count = *reinterpret_cast<int*>(data);
 	offset += 4;
 	// unsigned short
 	int index_size = 2;
@@ -417,7 +418,7 @@ void MDLModel::load(const char *filepath) {
 	if (!data) return;
 	free();
 
-	MDLHeader *header = (MDLHeader*)data;
+	MDLHeader *header = reinterpret_cast<MDLHeader*>(data);
 	if (strncmp(header->magic, "MDL1", 4)) {
 		LOGE("%s has wrong magic num\n", filepath);
 		delete [] data;
@@ -433,7 +434,7 @@ void MDLModel::load(const char *filepath) {
 	int offset = (int)sizeof(MDLHeader);
 	for (int ci = 0; ci < header->chunk_count; ci++) {
 		assert(offset < header->file_size);
-		MDLChunk *chunk = (MDLChunk*)(data+offset);
+		MDLChunk *chunk = reinterpret_cast<MDLChunk*>(data+offset);
 		switch (chunk->type) {
 			case 0x31464E49: //magic_to_int("INF1"):
 				loadINF1Chunk(this, (MDLINF1Chunk*)chunk);
