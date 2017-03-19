@@ -201,7 +201,7 @@ void DebugRenderer::render(mat4 view_proj_mat) {
 	// fill vbo
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, _vertex_count*DR_VERTEX_SIZE, _vertex_positions);
-	size_t normals_offset = _vertex_count*DR_VERTEX_SIZE;
+	GLintptr normals_offset = _vertex_count*DR_VERTEX_SIZE;
 	glBufferSubData(GL_ARRAY_BUFFER, normals_offset, _vertex_count*DR_VERTEX_SIZE, _vertex_normals);
 	_vertex_count = 0;
 

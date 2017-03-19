@@ -20,7 +20,7 @@ void setWrapTexture2D(GLint wrap_s, GLint wrap_t) {
 
 GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mipmaps) {
 	if (build_mipmaps) {
-		if (!(isPowerOfTwo(width) && isPowerOfTwo(height))) {
+		if (!(isPowerOfTwo((u32)width) && isPowerOfTwo((u32)height))) {
 			LOGW("Trying to build mipmap of non power of two image");
 			build_mipmaps = false;
 		}
@@ -71,7 +71,7 @@ GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mip
 
 GLuint loadTexture2D(float *pixels, int width, int height, int comp, bool build_mipmaps) {
 	if (build_mipmaps) {
-		if (!(isPowerOfTwo(width) && isPowerOfTwo(height))) {
+		if (!(isPowerOfTwo((u32)width) && isPowerOfTwo((u32)height))) {
 			LOGW("Trying to build mipmap of non power of two image");
 			build_mipmaps = false;
 		}
@@ -185,7 +185,7 @@ GLuint loadTexture2D(const char *filepath, bool build_mipmaps, int *out_width, i
 
 GLuint loadTextureCubeCross(u8 *pixels, int width, int height, int comp, bool build_mipmaps) {
 	int slice_size = width / 3;
-	if (!isPowerOfTwo(slice_size) || (height/4 != slice_size)) {
+	if (!isPowerOfTwo((u32)slice_size) || (height/4 != slice_size)) {
 		LOGE("Incorrect dimensions for cube cross: %dx%d", width, height);
 		return 0;
 	}
@@ -235,7 +235,7 @@ GLuint loadTextureCubeCross(u8 *pixels, int width, int height, int comp, bool bu
 			imageFlipHorizontally(slice_pixels, slice_size, slice_size, comp);
 			imageFlipVertically(slice_pixels, slice_size, slice_size, comp);
 		}
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, 0,
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+(GLenum)si, 0,
 			internal_format, slice_size, slice_size,
 			0, format, GL_UNSIGNED_BYTE, slice_pixels);
 		if (build_mipmaps) {
@@ -243,7 +243,7 @@ GLuint loadTextureCubeCross(u8 *pixels, int width, int height, int comp, bool bu
 			for (int mipmap_level = 1; half_slice_size > 1; mipmap_level++) {
 				imageHalve(slice_pixels, half_slice_size, half_slice_size, comp);
 				half_slice_size /= 2;
-				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, mipmap_level,
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+(GLenum)si, mipmap_level,
 					internal_format, half_slice_size, half_slice_size,
 					0, format, GL_UNSIGNED_BYTE, slice_pixels);
 			}
@@ -257,7 +257,7 @@ GLuint loadTextureCubeCross(u8 *pixels, int width, int height, int comp, bool bu
 
 GLuint loadTextureCubeCross(float *pixels, int width, int height, int comp, bool build_mipmaps) {
 	int slice_size = width / 3;
-	if (!isPowerOfTwo(slice_size) || (height/4 != slice_size)) {
+	if (!isPowerOfTwo((u32)slice_size) || (height/4 != slice_size)) {
 		LOGE("Incorrect dimensions for cube cross: %dx%d", width, height);
 		return 0;
 	}
@@ -307,7 +307,7 @@ GLuint loadTextureCubeCross(float *pixels, int width, int height, int comp, bool
 			imageFlipHorizontally(slice_pixels, slice_size, slice_size, comp);
 			imageFlipVertically  (slice_pixels, slice_size, slice_size, comp);
 		}
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, 0,
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+(GLenum)si, 0,
 			internal_format, slice_size, slice_size,
 			0, format, GL_FLOAT, slice_pixels);
 		if (build_mipmaps) {
@@ -315,7 +315,7 @@ GLuint loadTextureCubeCross(float *pixels, int width, int height, int comp, bool
 			for (int mipmap_level = 1; half_slice_size > 1; mipmap_level++) {
 				imageHalve(slice_pixels, half_slice_size, half_slice_size, comp);
 				half_slice_size /= 2;
-				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+si, mipmap_level,
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X+(GLenum)si, mipmap_level,
 					internal_format, half_slice_size, half_slice_size,
 					0, format, GL_FLOAT, slice_pixels);
 			}
@@ -360,7 +360,7 @@ GLuint loadTextureCubeCross(const char *filepath, bool build_mipmaps, int *out_s
 		}
 	}
 #else
-	assert(!"Not implemented");
+	assert(false); // not implemented
 #endif
 
 	return 0;

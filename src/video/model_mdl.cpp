@@ -197,7 +197,7 @@ void loadINF1Chunk(MDLModel *model, MDLINF1Chunk *chunk) {
 	model->nodes = new MDLNode[chunk->node_count];
 
 	u8 *data = (u8*)chunk + sizeof(MDLINF1Chunk);
-	memcpy(model->nodes, data, chunk->node_count*sizeof(MDLNode));
+	memcpy(model->nodes, data, (size_t)chunk->node_count*sizeof(MDLNode));
 }
 
 struct MDLMAT1Chunk {
@@ -236,7 +236,7 @@ void loadSKL1Chunk(MDLModel *model, MDLSKL1Chunk *chunk) {
 	model->bone_mats = new mat4[chunk->bone_count];
 
 	u8 *data = (u8*)chunk + sizeof(MDLSKL1Chunk);
-	memcpy(model->bones, data, chunk->bone_count*sizeof(MDLBone));
+	memcpy(model->bones, data, (size_t)chunk->bone_count*sizeof(MDLBone));
 
 	// identity pose
 	for (int i = 0; i < chunk->bone_count; i++) {
@@ -272,8 +272,8 @@ void loadACT1Chunk(MDLModel *model, MDLACT1Chunk *chunk) {
 			offset += sizeof(int);
 
 			track->bone_poses = new MDLBoneTransform[action->frame_count];
-			memcpy(track->bone_poses, data+offset, action->frame_count*sizeof(MDLBoneTransform));
-			offset += action->frame_count*sizeof(MDLBoneTransform);
+			memcpy(track->bone_poses, data+offset, (size_t)action->frame_count*sizeof(MDLBoneTransform));
+			offset += (size_t)action->frame_count*sizeof(MDLBoneTransform);
 		}
 
 		action->frame = 0; // initial valid frame
@@ -296,12 +296,13 @@ void loadVTX1Chunk(MDLModel *model, MDLVTX1Chunk *chunk) {
 		memcpy(&va->format, data, sizeof(MDLVertexFormat));
 		int vertex_count = *(int*)(data+sizeof(MDLVertexFormat));
 		size_t vertex_size = va->format.getSize();
+		GLsizeiptr vertex_data_size = (GLsizeiptr)vertex_count*(GLsizeiptr)vertex_size;
 		u8 *vertex_data = data+sizeof(MDLVertexFormat)+4;
-		offset += sizeof(MDLVertexFormat)+4 + vertex_size*vertex_count;
+		offset += sizeof(MDLVertexFormat)+4 + vertex_size*(size_t)vertex_count;
 
 		glGenBuffers(1, &va->vertex_buffer);
 		glBindBuffer(GL_ARRAY_BUFFER, va->vertex_buffer);
-		glBufferData(GL_ARRAY_BUFFER, vertex_count*vertex_size, vertex_data, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertex_data_size, vertex_data, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
@@ -379,7 +380,7 @@ void MDLModel::destroy() {
 	}
 
 	glDeleteTextures(texture_count, textures);
-	memset(textures, 0, sizeof(GLuint)*texture_count);
+	memset(textures, 0, (size_t)texture_count*sizeof(GLuint));
 
 	if (index_buffer) {
 		glDeleteBuffers(1, &index_buffer);
@@ -533,15 +534,15 @@ void MDLModel::boneMoveTo(int bone_index, vec3 target, vec3 normal) {
 		// all rotations will happen in this plane and around this axis
 		vec3 rot_axis_m = normalize(cross(pivot-bone2_m.translation, pivot-target));
 		float cos_gamma = dot(normalize(bone21), normalize(target-bone2_m.translation));
-		vec3 bone1_new_m = bone2_m.translation + quaternion(rot_axis_m, acos(cos_gamma_new)-acos(cos_gamma)) * bone21;
+		vec3 bone1_new_m = bone2_m.translation + quaternion(rot_axis_m, acosf(cos_gamma_new)-acosf(cos_gamma)) * bone21;
 		float cos_beta = dot(normalize(bone1_new_m-bone2_m.translation), normalize(target-bone1_new_m)); // target angle bone1
 
 		vec3 bone2_rot_axis_l = conjugate(bone2_m.rotation) * rot_axis_m;
 		vec3 bone1_rot_axis_l = conjugate(bone2_m.rotation) * rot_axis_m;
 
 		// apply result
-		bone_poses[bone2_index].rotation = bone_poses[bone2_index].rotation * quaternion(bone2_rot_axis_l, acos(cos_gamma_new)-acos(cos_gamma));
-		bone_poses[bone1_index].rotation = quaternion(bone1_rot_axis_l, -acos(cos_beta));
+		bone_poses[bone2_index].rotation = bone_poses[bone2_index].rotation * quaternion(bone2_rot_axis_l, acosf(cos_gamma_new)-acosf(cos_gamma));
+		bone_poses[bone1_index].rotation = quaternion(bone1_rot_axis_l, -acosf(cos_beta));
 
 		// rotate bone0 to match normal orientation
 		quat init_rot = bone0_m.rotation; // initial orientation of bone0
@@ -581,7 +582,7 @@ void MDLModel::draw(mat4 view_proj_mat) {
 
 	assert(texture_count <= 8);
 	for (int ti = 0; ti < texture_count; ti++) {
-		glActiveTexture(GL_TEXTURE0+ti);
+		glActiveTexture(GL_TEXTURE0+(GLenum)ti);
 		glBindTexture(GL_TEXTURE_2D, textures[ti]);
 	}
 
@@ -618,7 +619,7 @@ void MDLModel::draw(mat4 view_proj_mat) {
 
 			glUniform1i(colormap_loc, batch->texture_index);
 			// TODO: variable index type
-			glDrawElements(GL_TRIANGLES, batch->index_count, GL_UNSIGNED_SHORT, (GLvoid*)(batch->index_offset*sizeof(u16)));
+			glDrawElements(GL_TRIANGLES, batch->index_count, GL_UNSIGNED_SHORT, (GLvoid*)((size_t)batch->index_offset*sizeof(u16)));
 		}
 	}
 

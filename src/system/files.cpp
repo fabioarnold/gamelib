@@ -1,6 +1,12 @@
 size_t getFileSize(FILE *opened_file) {
+	size_t file_size = 0;
 	fseek(opened_file, 0, SEEK_END);
-	size_t file_size = ftell(opened_file);
+	long res = ftell(opened_file);
+	if (res < 0) {
+		LOGE("Couldn't get file size");
+	} else {
+		file_size = (size_t)res;
+	}
 	fseek(opened_file, 0, SEEK_SET);
 
 	return file_size;

@@ -35,8 +35,8 @@ struct DebugRenderer {
 	int _vertex_count;
 
 	Shader _shader;
-	GLuint _mvp_loc;
-	GLuint _color_loc;
+	GLint _mvp_loc;
+	GLint _color_loc;
 	GLuint _vbo;
 	Shader tex_shader;
 } debug_renderer;

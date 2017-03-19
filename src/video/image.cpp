@@ -2,7 +2,7 @@
 
 void imageCopyPixels(u8 *dst, u8 *src, int dst_width, int src_width, int comp, int line_width, int num_lines) {
 	while (num_lines-->0) {
-		memcpy(dst, src, line_width * comp * sizeof(u8));
+		memcpy(dst, src, (size_t)(line_width * comp) * sizeof(u8));
 		dst += dst_width * comp;
 		src += src_width * comp;
 	}
@@ -31,9 +31,9 @@ void imageFlipHorizontally(u8 *pixels, int width, int height, int comp) {
 	for (int y = 0; y < height; y++) {
 		int x1 = 0, x2 = width-1;
 		while (x1 < x2) {
-			memcpy(buffer, pixels + (y * width + x1) * comp, comp * sizeof(u8));
-			memcpy(pixels + (y * width + x1) * comp, pixels + (y * width + x2) * comp, comp * sizeof(float));
-			memcpy(pixels + (y * width + x2) * comp, buffer, comp * sizeof(u8));
+			memcpy(buffer, pixels + (y * width + x1) * comp, (size_t)comp * sizeof(u8));
+			memcpy(pixels + (y * width + x1) * comp, pixels + (y * width + x2) * comp, (size_t)comp * sizeof(float));
+			memcpy(pixels + (y * width + x2) * comp, buffer, (size_t)comp * sizeof(u8));
 			x1++;
 			x2--;
 		}
@@ -42,12 +42,13 @@ void imageFlipHorizontally(u8 *pixels, int width, int height, int comp) {
 }
 
 void imageFlipVertically(u8 *pixels, int width, int height, int comp) {
+	const size_t line_size = (size_t)(width * comp) * sizeof(u8);
 	u8 *buffer = new u8[width * comp];
 	int y1 = 0, y2 = height - 1;
 	while (y1 < y2) {
-		memcpy(buffer,                     pixels + y1 * width * comp, width * comp * sizeof(u8));
-		memcpy(pixels + y1 * width * comp, pixels + y2 * width * comp, width * comp * sizeof(u8));
-		memcpy(pixels + y2 * width * comp, buffer,                     width * comp * sizeof(u8));
+		memcpy(buffer,                     pixels + y1 * width * comp, line_size);
+		memcpy(pixels + y1 * width * comp, pixels + y2 * width * comp, line_size);
+		memcpy(pixels + y2 * width * comp, buffer,                     line_size);
 		y1++;
 		y2--;
 	}
@@ -76,10 +77,11 @@ float *imageFloat(u8 *pixels, int comp_count) {
 
 static inline void imageSwapPixel(float *dst, float *src, int comp) {
 	assert(comp > 0 && comp <= 4);
+	const size_t pixel_size = (size_t)comp * sizeof(float);
 	float buffer[comp];
-	memcpy(buffer, dst, comp * sizeof(float));
-	memcpy(dst,    src, comp * sizeof(float));
-	memcpy(src, buffer, comp * sizeof(float));
+	memcpy(buffer, dst, pixel_size);
+	memcpy(dst,    src, pixel_size);
+	memcpy(src, buffer, pixel_size);
 }
 
 // square
@@ -104,8 +106,9 @@ void imageTranspose(float *dst, float *src, int width, int height, int comp) {
 }
 
 void imageCopyPixels(float *dst, float *src, int dst_width, int src_width, int comp, int line_width, int num_lines) {
+	const size_t line_size = (size_t)(line_width * comp) * sizeof(float);
 	while (num_lines-- > 0) {
-		memcpy(dst, src, line_width * comp * sizeof(float));
+		memcpy(dst, src, line_size);
 		dst += dst_width * comp;
 		src += src_width * comp;
 	}
@@ -243,7 +246,7 @@ void imageFlipHorizontally(float *pixels, int width, int height, int comp) {
 
 void imageFlipVertically(float *pixels, int width, int height, int comp) {
 	float *line = new float[width * comp];
-	size_t line_size = width * comp * sizeof(float);
+	size_t line_size = (size_t)(width * comp) * sizeof(float);
 	int y1 = 0, y2 = height - 1;
 	while (y1 < y2) {
 		memcpy(line,                       pixels + y1 * width * comp, line_size);
