@@ -9,7 +9,7 @@ void imageCopyPixels(u8 *dst, u8 *src, int dst_width, int src_width, int comp, i
 }
 
 void imageHalve(u8 *pixels, int width, int height, int comp) {
-	assert(width > 1 && height > 1 && (width%2) == 0 && (height%2) == 0);
+	assert(width > 1 && height > 1);
 	int half_width  = width  / 2;
 	int half_height = height / 2;
 	for (int y = 0; y < half_height; y++) {
@@ -21,6 +21,36 @@ void imageHalve(u8 *pixels, int width, int height, int comp) {
 					  + pixels[COORDS(2*x+0, 2*y+1) + ci]
 					  + pixels[COORDS(2*x+1, 2*y+1) + ci];
 				dst_pixel[ci] = (u8)(c/4);
+			}
+		}
+	}
+}
+
+void imageHalveHorizontally(u8 *pixels, int width, int height, int comp) {
+	assert(width > 1);
+	int half_width = width  / 2;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < half_width; x++) {
+			u8 *dst_pixel = pixels+((y*half_width + x) * comp);
+			for (int ci = 0; ci < comp; ci++) {
+				u16 c = pixels[COORDS(2*x+0, 2*y) + ci]
+					  + pixels[COORDS(2*x+1, 2*y) + ci];
+				dst_pixel[ci] = (u8)(c/2);
+			}
+		}
+	}
+}
+
+void imageHalveVertically(u8 *pixels, int width, int height, int comp) {
+	assert(height > 1);
+	int half_height = height / 2;
+	for (int y = 0; y < half_height; y++) {
+		for (int x = 0; x < width; x++) {
+			u8 *dst_pixel = pixels+((y*width + x) * comp);
+			for (int ci = 0; ci < comp; ci++) {
+				u16 c = pixels[COORDS(2*x, 2*y+0) + ci]
+					  + pixels[COORDS(2*x, 2*y+1) + ci];
+				dst_pixel[ci] = (u8)(c/2);
 			}
 		}
 	}
@@ -127,6 +157,34 @@ void imageHalve(float *pixels, int width, int height, int comp) {
 						+ pixels[COORDS(2*x+0,2*y+1) + ci]
 						+ pixels[COORDS(2*x+1,2*y+1) + ci];
 				dst_pixel[ci] = c/4.0f;
+			}
+		}
+	}
+}void imageHalveHorizontally(float *pixels, int width, int height, int comp) {
+	assert(width > 1);
+	int half_width = width  / 2;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < half_width; x++) {
+			float *dst_pixel = pixels+((y*half_width + x) * comp);
+			for (int ci = 0; ci < comp; ci++) {
+				float c = pixels[COORDS(2*x+0, 2*y) + ci]
+						+ pixels[COORDS(2*x+1, 2*y) + ci];
+				dst_pixel[ci] = (float)(c/2);
+			}
+		}
+	}
+}
+
+void imageHalveVertically(float *pixels, int width, int height, int comp) {
+	assert(height > 1);
+	int half_height = height / 2;
+	for (int y = 0; y < half_height; y++) {
+		for (int x = 0; x < width; x++) {
+			float *dst_pixel = pixels+((y*width + x) * comp);
+			for (int ci = 0; ci < comp; ci++) {
+				float c = pixels[COORDS(2*x, 2*y+0) + ci]
+						+ pixels[COORDS(2*x, 2*y+1) + ci];
+				dst_pixel[ci] = (float)(c/2);
 			}
 		}
 	}

@@ -57,10 +57,18 @@ GLuint loadTexture2D(u8 *pixels, int width, int height, int comp, bool build_mip
 
 	// mipmap building
 	if (build_mipmaps) {
-		for (int mipmap_level = 1; width > 1 && height > 1; mipmap_level++) {
-			imageHalve(pixels, width, height, comp);
-			width  /= 2;
-			height /= 2;
+		for (int mipmap_level = 1; (width > 1 || height > 1); mipmap_level++) {
+			if (width > 1 && height > 1) {
+				imageHalve(pixels, width, height, comp);
+				width  /= 2;
+				height /= 2;
+			} else if (width > 1) {
+				imageHalveHorizontally(pixels, width, height, comp);
+				width /= 2;
+			} else if (height > 1) {
+				imageHalveVertically(pixels, width, height, comp);
+				height /= 2;
+			}
 			glTexImage2D(GL_TEXTURE_2D, mipmap_level, internal_format,
 				width, height, 0, format, GL_UNSIGNED_BYTE, pixels);
 		}
@@ -126,14 +134,17 @@ GLuint loadTexture2D(float *pixels, int width, int height, int comp, bool build_
 	// mipmap building
 	if (build_mipmaps) {
 		for (int mipmap_level = 1; width > 1 && height > 1; mipmap_level++) {
-			#if 0
-			if (width > 2 && height > 2)
-				imageReduce(pixels, width, height, comp);
-			else
-			#endif
+			if (width > 1 && height > 1) {
 				imageHalve(pixels, width, height, comp);
-			width  /= 2;
-			height /= 2;
+				width  /= 2;
+				height /= 2;
+			} else if (width > 1) {
+				imageHalveHorizontally(pixels, width, height, comp);
+				width /= 2;
+			} else if (height > 1) {
+				imageHalveVertically(pixels, width, height, comp);
+				height /= 2;
+			}
 			glTexImage2D(GL_TEXTURE_2D, mipmap_level, internal_format,
 				width, height, 0, format, GL_FLOAT, pixels);
 		}
