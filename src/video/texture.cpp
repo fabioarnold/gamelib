@@ -1,13 +1,3 @@
-void imageCopyPixels(u8 *dest, u8 *src, int dest_width, int src_width, int comp, int line_width, int num_lines);
-void imageHalve(u8 *pixels, int width, int height, int comp);
-void imageFlipHorizontally(u8 *pixels, int width, int height, int comp);
-void imageFlipVertically(u8 *pixels, int width, int height, int comp);
-
-void imageCopyPixels(float *dest, float *src, int dest_width, int src_width, int comp, int line_width, int num_lines);
-void imageHalve(float *pixels, int width, int height, int comp);
-void imageFlipHorizontally(float *pixels, int width, int height, int comp);
-void imageFlipVertically(float *pixels, int width, int height, int comp);
-
 void setFilterTexture2D(GLint min_filter, GLint mag_filter) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);

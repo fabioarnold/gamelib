@@ -395,13 +395,13 @@ inline float length(vec3 v) {
 #if 1
 inline vec2 normalize(vec2 v) {
 	float len = length(v);
-	if (len == 0.0f) return v2(0.0f); // avoid infinity
+	if (fequal(len, 0.0f)) return v2(0.0f); // avoid infinity
 	return v/len;
 }
 
 inline vec3 normalize(vec3 v) {
 	float len = length(v);
-	if (len == 0.0f) return v3(0.0f); // avoid infinity
+	if (fequal(len, 0.0f)) return v3(0.0f); // avoid infinity
 	return v/len;
 }
 #else

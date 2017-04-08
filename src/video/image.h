@@ -3,7 +3,7 @@ void imageHalve(u8 *pixels, int width, int height, int comp);
 void imageHalveHorizontally(u8 *pixels, int width, int height, int comp);
 void imageHalveVertically(u8 *pixels, int width, int height, int comp);
 void imageFlipHorizontally(u8 *pixels, int width, int height, int comp);
-void imageFlipVertically(u8 *pixels, int width, int height, int comp);void imageCopyPixels(u8 *dest, u8 *src, int dest_width, int src_width, int comp, int line_width, int num_lines);
+void imageFlipVertically(u8 *pixels, int width, int height, int comp);
 void imageSwapChannelsRB(u8 *pixels, int pixel_count, int comp);
 
 float *imageFloat(u8 *pixels, int comp_count/*=width*height*comp*/);

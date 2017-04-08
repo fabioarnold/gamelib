@@ -16,10 +16,10 @@ void imageHalve(u8 *pixels, int width, int height, int comp) {
 		for (int x = 0; x < half_width; x++) {
 			u8 *dst_pixel = pixels+((y*half_width + x) * comp);
 			for (int ci = 0; ci < comp; ci++) {
-				u16 c = pixels[COORDS(2*x+0, 2*y+0) + ci]
-					  + pixels[COORDS(2*x+1, 2*y+0) + ci]
-					  + pixels[COORDS(2*x+0, 2*y+1) + ci]
-					  + pixels[COORDS(2*x+1, 2*y+1) + ci];
+				u16 c = (u16)(pixels[COORDS(2*x+0, 2*y+0) + ci]
+							+ pixels[COORDS(2*x+1, 2*y+0) + ci]
+							+ pixels[COORDS(2*x+0, 2*y+1) + ci]
+							+ pixels[COORDS(2*x+1, 2*y+1) + ci]);
 				dst_pixel[ci] = (u8)(c/4);
 			}
 		}
@@ -33,8 +33,8 @@ void imageHalveHorizontally(u8 *pixels, int width, int height, int comp) {
 		for (int x = 0; x < half_width; x++) {
 			u8 *dst_pixel = pixels+((y*half_width + x) * comp);
 			for (int ci = 0; ci < comp; ci++) {
-				u16 c = pixels[COORDS(2*x+0, 2*y) + ci]
-					  + pixels[COORDS(2*x+1, 2*y) + ci];
+				u16 c = (u16)(pixels[COORDS(2*x+0, 2*y) + ci]
+							+ pixels[COORDS(2*x+1, 2*y) + ci]);
 				dst_pixel[ci] = (u8)(c/2);
 			}
 		}
@@ -48,8 +48,8 @@ void imageHalveVertically(u8 *pixels, int width, int height, int comp) {
 		for (int x = 0; x < width; x++) {
 			u8 *dst_pixel = pixels+((y*width + x) * comp);
 			for (int ci = 0; ci < comp; ci++) {
-				u16 c = pixels[COORDS(2*x, 2*y+0) + ci]
-					  + pixels[COORDS(2*x, 2*y+1) + ci];
+				u16 c = (u16)(pixels[COORDS(2*x, 2*y+0) + ci]
+							+ pixels[COORDS(2*x, 2*y+1) + ci]);
 				dst_pixel[ci] = (u8)(c/2);
 			}
 		}

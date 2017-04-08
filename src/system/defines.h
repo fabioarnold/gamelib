@@ -40,6 +40,6 @@ float fmax(float f0, float f1) {
 	return f0 > f1 ? f0 : f1;
 }
 
-bool fequal(float f0, float f1, float eps = 0.001f) {
+bool fequal(float f0, float f1, float eps = 1e-6f) {
 	return fabsf(f1-f0) < eps;
 }

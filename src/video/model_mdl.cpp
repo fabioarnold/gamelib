@@ -255,7 +255,7 @@ void loadACT1Chunk(MDLModel *model, MDLACT1Chunk *chunk) {
 	model->actions = new MDLAction[chunk->action_count];
 
 	u8 *data = (u8*)chunk;
-	int offset = sizeof(MDLACT1Chunk);
+	size_t offset = sizeof(MDLACT1Chunk);
 	for (int ai = 0; ai < chunk->action_count; ai++) {
 		MDLAction *action = model->actions+ai;
 
@@ -288,7 +288,7 @@ void loadVTX1Chunk(MDLModel *model, MDLVTX1Chunk *chunk) {
 	model->vertex_array_count = chunk->vertex_array_count;
 	model->vertex_arrays = new MDLVertexArray[chunk->vertex_array_count];
 
-	int offset = (int)sizeof(MDLVTX1Chunk);
+	size_t offset = (int)sizeof(MDLVTX1Chunk);
 	for (int vai = 0; vai < chunk->vertex_array_count; vai++) {
 		MDLVertexArray *va = model->vertex_arrays+vai;
 
