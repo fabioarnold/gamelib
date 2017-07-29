@@ -410,9 +410,7 @@ GLuint loadTexture2DTGA(const char* filepath, bool build_mipmaps, int *out_width
 	TargaHeader *header = (TargaHeader*)data;
 #ifdef DEBUG
 	if (header->offset) {
-		LOGE("TGA image \"%s\" has metadata. This is currently unsupported.", filepath);
-		delete [] data;
-		return 0;
+		LOGW("TGA image \"%s\" has metadata. Consider removing it.", filepath);
 	}
 	if (header->color_type != TARGA_COLOR_TYPE_TRUECOLOR
 	 || header->image_type != TARGA_IMAGE_TYPE_TRUECOLOR) {
@@ -430,7 +428,7 @@ GLuint loadTexture2DTGA(const char* filepath, bool build_mipmaps, int *out_width
 	}
 #endif
 
-	u8 *pixels = data+sizeof(TargaHeader);
+	u8 *pixels = data+sizeof(TargaHeader)+header->offset;
 	int width = header->width;
 	int height = header->height;
 	int comp = header->depth/8;
