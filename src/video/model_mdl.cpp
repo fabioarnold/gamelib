@@ -505,6 +505,20 @@ void MDLModel::applyAction(MDLAction *action) {
 	}
 }
 
+void MDLBoneTransform::blend(MDLBoneTransform &other, float weight) {
+	translation = mix(translation, other.translation, weight);
+	scale = mix(scale, other.scale, weight);
+	rotation = normalize(mix(rotation, other.rotation, weight));
+}
+
+void MDLModel::blendAction(MDLAction *action, float weight) {
+	assert(action->frame >= 0 && action->frame < action->frame_count); // validate frame
+	for (int ti = 0; ti < action->track_count; ti++) {
+		MDLActionTrack *track = action->tracks+ti;
+		bone_poses[track->bone_index].blend(track->bone_poses[action->frame], weight);
+	}
+}
+
 void MDLModel::boneMoveTo(int bone_index, vec3 target, vec3 normal) {
 	// calc indices of bone chain
 	int bone0_index = bone_index;

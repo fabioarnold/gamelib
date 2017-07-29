@@ -92,6 +92,8 @@ struct MDLBoneTransform { // in order of application
 	quat rotation;
 	float scale;
 
+	void blend(MDLBoneTransform &other, float weight);
+
 	mat4 getMatrix();
 };
 

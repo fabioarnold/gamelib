@@ -708,3 +708,7 @@ vec2 mix(vec2 v0, vec2 v1, float a) {
 vec3 mix(vec3 v0, vec3 v1, float a) {
 	return (1.0f-a)*v0 + a*v1;
 }
+
+vec4 mix(vec4 v0, vec4 v1, float a) {
+	return (1.0f-a)*v0 + a*v1;
+}

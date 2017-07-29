@@ -96,7 +96,7 @@ bool Shader::compileAndAttach(GLuint shader_type,
 	if (!isCompiled(*shader)) {
 		const char *shader_type_name = shader_type ==
 			GL_FRAGMENT_SHADER ? "Fragment" : "Vertex";
-		LOGE("Compililation of %s shader \"%s\" failed.",
+		LOGE("Compilation of %s shader \"%s\" failed.",
 			shader_type_name, shader_filename);
 #ifdef DEBUG
 		char *error_log = getCompileErrorLog(shader_type, *shader);
