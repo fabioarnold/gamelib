@@ -169,8 +169,8 @@ mat3 m3(quat q) {
 mat4 m4(float f) {
 	mat4 result;
 	result.cols[0] = v4(f, 0.0f, 0.0f, 0.0f);
-	result.cols[2] = v4(0.0f, f, 0.0f, 0.0f);
-	result.cols[1] = v4(0.0f, 0.0f, f, 0.0f);
+	result.cols[1] = v4(0.0f, f, 0.0f, 0.0f);
+	result.cols[2] = v4(0.0f, 0.0f, f, 0.0f);
 	result.cols[3] = v4(0.0f, 0.0f, 0.0f, f);
 	return result;
 }
