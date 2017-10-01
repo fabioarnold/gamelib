@@ -1,7 +1,7 @@
-const u32 DR_MAX_VERTEX_COUNT = 65536;
-const u32 DR_VERTEX_SIZE = 12;
-const u32 DR_MAX_VERTEX_BUFFER_SIZE = DR_MAX_VERTEX_COUNT*DR_VERTEX_SIZE;
-const u32 DR_MAX_BATCH_COUNT = 256;
+const int DR_MAX_VERTEX_COUNT = 65536;
+const int DR_VERTEX_SIZE = 24;
+const int DR_MAX_VERTEX_BUFFER_SIZE = DR_MAX_VERTEX_COUNT*DR_VERTEX_SIZE;
+const int DR_MAX_BATCH_COUNT = 256;
 
 struct DebugRenderBatch {
 	GLenum primitive; // GL_LINES or GL_TRIANGLES
@@ -23,6 +23,7 @@ struct DebugRenderer {
 
 	void init();
 	void render(mat4 view_proj_mat); // renders all the draw calls
+	void destroy();
 
 	vec4 _color;
 
@@ -34,8 +35,8 @@ struct DebugRenderer {
 	int _vertex_count;
 
 	Shader _shader;
-	GLuint _mvp_loc;
-	GLuint _color_loc;
+	GLint _mvp_loc;
+	GLint _color_loc;
 	GLuint _vbo;
 	Shader tex_shader;
 } debug_renderer;

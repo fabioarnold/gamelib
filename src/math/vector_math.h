@@ -109,6 +109,13 @@ inline vec3 v3(vec2 v) {
 	result.z = 0.0f;
 	return result;
 }
+inline vec3 v3(vec2 v, float z) {
+	vec3 result;
+	result.x = v.x;
+	result.y = v.y;
+	result.z = z;
+	return result;
+}
 inline vec3 v3(vec4 v) {
 	vec3 result;
 	result.x = v.x;
@@ -162,8 +169,8 @@ mat3 m3(quat q) {
 mat4 m4(float f) {
 	mat4 result;
 	result.cols[0] = v4(f, 0.0f, 0.0f, 0.0f);
-	result.cols[2] = v4(0.0f, f, 0.0f, 0.0f);
-	result.cols[1] = v4(0.0f, 0.0f, f, 0.0f);
+	result.cols[1] = v4(0.0f, f, 0.0f, 0.0f);
+	result.cols[2] = v4(0.0f, 0.0f, f, 0.0f);
 	result.cols[3] = v4(0.0f, 0.0f, 0.0f, f);
 	return result;
 }
@@ -388,13 +395,13 @@ inline float length(vec3 v) {
 #if 1
 inline vec2 normalize(vec2 v) {
 	float len = length(v);
-	if (len == 0.0f) return v2(0.0f); // avoid infinity
+	if (fequal(len, 0.0f)) return v2(0.0f); // avoid infinity
 	return v/len;
 }
 
 inline vec3 normalize(vec3 v) {
 	float len = length(v);
-	if (len == 0.0f) return v3(0.0f); // avoid infinity
+	if (fequal(len, 0.0f)) return v3(0.0f); // avoid infinity
 	return v/len;
 }
 #else
@@ -564,7 +571,7 @@ void printMatrix(mat3 m) {
 #ifdef DEBUG
 	for (int row = 0; row < 3; row++) {
 		for (int col = 0; col < 3; col++) {
-			printf("%.3f ", m.cols[col][row]);
+			printf("%.3f ", (double)m.cols[col][row]);
 		}
 		puts("");
 	}
@@ -574,7 +581,7 @@ void printMatrix(mat4 m) {
 #ifdef DEBUG
 	for (int row = 0; row < 4; row++) {
 		for (int col = 0; col < 4; col++) {
-			printf("%.3f ", m.cols[col][row]);
+			printf("%.3f ", (double)m.cols[col][row]);
 		}
 		puts("");
 	}
@@ -699,5 +706,9 @@ vec2 mix(vec2 v0, vec2 v1, float a) {
 }
 
 vec3 mix(vec3 v0, vec3 v1, float a) {
+	return (1.0f-a)*v0 + a*v1;
+}
+
+vec4 mix(vec4 v0, vec4 v1, float a) {
 	return (1.0f-a)*v0 + a*v1;
 }

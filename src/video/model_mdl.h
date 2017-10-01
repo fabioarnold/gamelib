@@ -92,6 +92,8 @@ struct MDLBoneTransform { // in order of application
 	quat rotation;
 	float scale;
 
+	void blend(MDLBoneTransform &other, float weight);
+
 	mat4 getMatrix();
 };
 
@@ -135,6 +137,7 @@ struct MDLModel {
 	GLuint index_buffer;
 	Shader shader; // TODO: make this a reference (also multiple shader per vertex array/material)
 	// cached uniform locations
+	GLint color_loc;
 	GLint mvp_loc;
 	GLint normal_mat_loc;
 	GLint bone_mats_loc;
@@ -142,7 +145,8 @@ struct MDLModel {
 
 	MDLModel();
 	void load(const char *filepath); // TODO: switch to memory arena
-	void free();
+	void destroy(); // deletes OpenGL objects
+	void free(); // frees all memory (including GL objs)
 
 	int getBoneIndexByName(const char *bone_name); // returns -1 when bone could not be found
 

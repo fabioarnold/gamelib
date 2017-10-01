@@ -4,7 +4,7 @@ class Shader {
 public:
 	Shader();
 	~Shader() {free();} // WARNING: makes opengl calls (needs valid opengl context)
-
+	void destroy(); // deletes OpenGL objects
 	void free();
 
 	// will return true on success

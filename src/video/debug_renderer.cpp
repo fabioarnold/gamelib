@@ -71,6 +71,13 @@ void DebugRenderer::init() {
 	_batch_count = 0;
 }
 
+void DebugRenderer::destroy() {
+	glDeleteBuffers(1, &_vbo);
+	_vbo = 0;
+	_shader.free();
+	tex_shader.free();
+}
+
 void DebugRenderer::setColor(float r, float g, float b, float a) {
 	_color.r = r;
 	_color.g = g;
@@ -79,7 +86,7 @@ void DebugRenderer::setColor(float r, float g, float b, float a) {
 }
 
 bool operator!=(vec4 v0, vec4 v1) {
-	return v0.x != v1.x || v0.y != v1.y || v0.z != v1.z || v0.w != v1.w;
+	return !fequal(v0.x, v1.x) || !fequal(v0.y, v1.y) || !fequal(v0.z, v1.z) || !fequal(v0.w, v1.w);
 }
 
 void DebugRenderer::drawTriangle(vec3 v0, vec3 v1, vec3 v2) {
@@ -194,7 +201,7 @@ void DebugRenderer::render(mat4 view_proj_mat) {
 	// fill vbo
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, _vertex_count*DR_VERTEX_SIZE, _vertex_positions);
-	size_t normals_offset = _vertex_count*DR_VERTEX_SIZE;
+	GLintptr normals_offset = _vertex_count*DR_VERTEX_SIZE;
 	glBufferSubData(GL_ARRAY_BUFFER, normals_offset, _vertex_count*DR_VERTEX_SIZE, _vertex_normals);
 	_vertex_count = 0;
 
@@ -212,7 +219,7 @@ void DebugRenderer::render(mat4 view_proj_mat) {
 	bool using_texture = _batch_count > 0 && _batches[0].texture != 0;
 	for (int ib = 0; ib < _batch_count; ib++) {
 		DebugRenderBatch *b = _batches+ib;
-		if (using_texture != b->texture != 0) {
+		if (using_texture != (b->texture != 0)) {
 			using_texture = b->texture != 0;
 			if (using_texture) {
 				tex_shader.use();

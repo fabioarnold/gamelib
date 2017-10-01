@@ -138,6 +138,7 @@ char *generateFragmentShaderSource(MDLVertexFormat *vertex_format /* mat info */
 	if (vertex_format->attribs[VAT_TEXCOORD0].components_count) {
 		buffer << "uniform sampler2D colormap;" << std::endl;
 	}
+	buffer << "uniform vec4 u_color;" << std::endl;
 
 	// varyings
 	if (vertex_format->attribs[VAT_NORMAL].components_count) {
@@ -160,7 +161,7 @@ char *generateFragmentShaderSource(MDLVertexFormat *vertex_format /* mat info */
 	} else {
 		buffer << "\tvec4 color = vec4(1.0);" << std::endl;
 	}
-	buffer << "\tgl_FragColor = vec4(shading * color.rgb, color.a);" << std::endl;
+	buffer << "\tgl_FragColor = vec4(shading * color.rgb * u_color.rgb, color.a * u_color.a);" << std::endl;
 	buffer << "}" << std::endl;
 
 	// copy to zero terminated string
@@ -196,7 +197,7 @@ void loadINF1Chunk(MDLModel *model, MDLINF1Chunk *chunk) {
 	model->nodes = new MDLNode[chunk->node_count];
 
 	u8 *data = (u8*)chunk + sizeof(MDLINF1Chunk);
-	memcpy(model->nodes, data, chunk->node_count*sizeof(MDLNode));
+	memcpy(model->nodes, data, (size_t)chunk->node_count*sizeof(MDLNode));
 }
 
 struct MDLMAT1Chunk {
@@ -211,8 +212,15 @@ void loadMAT1Chunk(MDLModel *model, MDLMAT1Chunk *chunk) {
 	for (int ti = 0; ti < chunk->mat_count; ti++) {
 		// TODO: don't fetch textures multiple times
 		char filepath[256];
-		sprintf(filepath, "data/textures/%s", texture_filepaths);
-		model->textures[ti] = loadCompressedTexture2D(filepath, nullptr, nullptr);
+		// look in gfx folder
+		sprintf(filepath, "data/gfx/%s.tga", texture_filepaths);
+		if (access(filepath, R_OK) != -1) { // file exists
+			model->textures[ti] = loadTexture2D(filepath, false, nullptr, nullptr);
+		} else {
+			// might be a compressed texture
+			sprintf(filepath, "data/textures/%s", texture_filepaths);
+			model->textures[ti] = loadCompressedTexture2D(filepath, nullptr, nullptr);
+		}
 		texture_filepaths += 64;
 	}
 }
@@ -228,7 +236,7 @@ void loadSKL1Chunk(MDLModel *model, MDLSKL1Chunk *chunk) {
 	model->bone_mats = new mat4[chunk->bone_count];
 
 	u8 *data = (u8*)chunk + sizeof(MDLSKL1Chunk);
-	memcpy(model->bones, data, chunk->bone_count*sizeof(MDLBone));
+	memcpy(model->bones, data, (size_t)chunk->bone_count*sizeof(MDLBone));
 
 	// identity pose
 	for (int i = 0; i < chunk->bone_count; i++) {
@@ -247,25 +255,25 @@ void loadACT1Chunk(MDLModel *model, MDLACT1Chunk *chunk) {
 	model->actions = new MDLAction[chunk->action_count];
 
 	u8 *data = (u8*)chunk;
-	int offset = sizeof(MDLACT1Chunk);
+	size_t offset = sizeof(MDLACT1Chunk);
 	for (int ai = 0; ai < chunk->action_count; ai++) {
 		MDLAction *action = model->actions+ai;
 
 		memcpy(action->name, data+offset, 16);
-		action->frame_count = *(int*)(data+offset+offsetof(MDLAction, frame_count));
-		action->track_count = *(int*)(data+offset+offsetof(MDLAction, track_count));
+		action->frame_count = *reinterpret_cast<int*>(data+offset+offsetof(MDLAction, frame_count));
+		action->track_count = *reinterpret_cast<int*>(data+offset+offsetof(MDLAction, track_count));
 		offset += 24;
 
 		action->tracks = new MDLActionTrack[action->track_count];
 		for (int ti = 0; ti < action->track_count; ti++) {
 			MDLActionTrack *track = action->tracks+ti;
 
-			track->bone_index = *(int*)(data+offset);
+			track->bone_index = *reinterpret_cast<int*>(data+offset);
 			offset += sizeof(int);
 
 			track->bone_poses = new MDLBoneTransform[action->frame_count];
-			memcpy(track->bone_poses, data+offset, action->frame_count*sizeof(MDLBoneTransform));
-			offset += action->frame_count*sizeof(MDLBoneTransform);
+			memcpy(track->bone_poses, data+offset, (size_t)action->frame_count*sizeof(MDLBoneTransform));
+			offset += (size_t)action->frame_count*sizeof(MDLBoneTransform);
 		}
 
 		action->frame = 0; // initial valid frame
@@ -280,20 +288,21 @@ void loadVTX1Chunk(MDLModel *model, MDLVTX1Chunk *chunk) {
 	model->vertex_array_count = chunk->vertex_array_count;
 	model->vertex_arrays = new MDLVertexArray[chunk->vertex_array_count];
 
-	int offset = (int)sizeof(MDLVTX1Chunk);
+	size_t offset = (int)sizeof(MDLVTX1Chunk);
 	for (int vai = 0; vai < chunk->vertex_array_count; vai++) {
 		MDLVertexArray *va = model->vertex_arrays+vai;
 
 		u8 *data = (u8*)chunk + offset;
 		memcpy(&va->format, data, sizeof(MDLVertexFormat));
-		int vertex_count = *(int*)(data+sizeof(MDLVertexFormat));
+		int vertex_count = *reinterpret_cast<int*>(data+sizeof(MDLVertexFormat));
 		size_t vertex_size = va->format.getSize();
+		GLsizeiptr vertex_data_size = (GLsizeiptr)vertex_count*(GLsizeiptr)vertex_size;
 		u8 *vertex_data = data+sizeof(MDLVertexFormat)+4;
-		offset += sizeof(MDLVertexFormat)+4 + vertex_size*vertex_count;
+		offset += sizeof(MDLVertexFormat)+4 + vertex_size*(size_t)vertex_count;
 
 		glGenBuffers(1, &va->vertex_buffer);
 		glBindBuffer(GL_ARRAY_BUFFER, va->vertex_buffer);
-		glBufferData(GL_ARRAY_BUFFER, vertex_count*vertex_size, vertex_data, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertex_data_size, vertex_data, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }
@@ -303,6 +312,7 @@ struct MDLTRI1Chunk {
 	int mesh_count;
 };
 void loadTRI1Chunk(MDLModel *model, MDLTRI1Chunk *chunk) {
+	char *data;
 	model->meshes = new MDLMesh[chunk->mesh_count];
 	model->mesh_count = chunk->mesh_count;
 
@@ -310,10 +320,10 @@ void loadTRI1Chunk(MDLModel *model, MDLTRI1Chunk *chunk) {
 	for (int mi = 0; mi < chunk->mesh_count; mi++) {
 		MDLMesh *mesh = model->meshes+mi;
 
-		char *data = (char*)chunk + offset;
-		mesh->vertex_array_index = *(int*)data;
-		mesh->index_data_type = *(int*)(data+4);
-		mesh->batch_count = *(int*)(data+8);
+		data = (char*)chunk + offset;
+		mesh->vertex_array_index = *reinterpret_cast<int*>(data);
+		mesh->index_data_type = *reinterpret_cast<int*>(data+4);
+		mesh->batch_count = *reinterpret_cast<int*>(data+8);
 		mesh->batches = new MDLTriangleBatch[mesh->batch_count];
 
 		offset += 12;
@@ -321,16 +331,16 @@ void loadTRI1Chunk(MDLModel *model, MDLTRI1Chunk *chunk) {
 		for (int bi = 0; bi < mesh->batch_count; bi++) {
 			MDLTriangleBatch *batch = mesh->batches+bi;
 
-			char *data = (char*)chunk + offset;
-			batch->texture_index = *(int*)data;
-			batch->index_offset = *(int*)(data+4);
-			batch->index_count = *(int*)(data+8);
+			data = (char*)chunk + offset;
+			batch->texture_index = *reinterpret_cast<int*>(data);
+			batch->index_offset = *reinterpret_cast<int*>(data+4);
+			batch->index_count = *reinterpret_cast<int*>(data+8);
 
 			offset += 12;
 		}
 	}
-	char *data = (char*)chunk + offset;
-	int index_count = *(int*)data;
+	data = (char*)chunk + offset;
+	int index_count = *reinterpret_cast<int*>(data);
 	offset += 4;
 	// unsigned short
 	int index_size = 2;
@@ -362,21 +372,45 @@ MDLModel::MDLModel() :
 	meshes(NULL),
 	index_buffer(0) {}
 
-void MDLModel::free() {
-	ARRAY_FREE(nodes);
-	ARRAY_FREE(bones);
-	ARRAY_FREE(bone_poses);
-	ARRAY_FREE(bone_mats)
-	ARRAY_FREE(actions);
-	ARRAY_FREE(textures);
-	ARRAY_FREE(vertex_arrays);
-	ARRAY_FREE(meshes);
+void MDLModel::destroy() {
+	for (int i = 0; i < vertex_array_count; i++) {
+		if (vertex_arrays[i].vertex_buffer) {
+			glDeleteBuffers(1, &vertex_arrays[i].vertex_buffer);
+			vertex_arrays[i].vertex_buffer = 0;
+		}
+	}
+
+	glDeleteTextures(texture_count, textures);
+	memset(textures, 0, (size_t)texture_count*sizeof(GLuint));
 
 	if (index_buffer) {
 		glDeleteBuffers(1, &index_buffer);
 		index_buffer = 0;
 	}
-	shader.free();
+
+	shader.destroy();
+}
+
+void MDLModel::free() {
+	ARRAY_FREE(nodes);
+	node_count = 0;
+
+	ARRAY_FREE(bones);
+	ARRAY_FREE(bone_poses);
+	ARRAY_FREE(bone_mats)
+	bone_count = 0;
+
+	ARRAY_FREE(actions);
+	action_count = 0;
+
+	ARRAY_FREE(vertex_arrays);
+	vertex_array_count = 0;
+
+	ARRAY_FREE(textures);
+	texture_count = 0;
+
+	ARRAY_FREE(meshes);
+	mesh_count = 0;
 }
 
 void MDLModel::load(const char *filepath) {
@@ -384,7 +418,7 @@ void MDLModel::load(const char *filepath) {
 	if (!data) return;
 	free();
 
-	MDLHeader *header = (MDLHeader*)data;
+	MDLHeader *header = reinterpret_cast<MDLHeader*>(data);
 	if (strncmp(header->magic, "MDL1", 4)) {
 		LOGE("%s has wrong magic num\n", filepath);
 		delete [] data;
@@ -400,7 +434,7 @@ void MDLModel::load(const char *filepath) {
 	int offset = (int)sizeof(MDLHeader);
 	for (int ci = 0; ci < header->chunk_count; ci++) {
 		assert(offset < header->file_size);
-		MDLChunk *chunk = (MDLChunk*)(data+offset);
+		MDLChunk *chunk = reinterpret_cast<MDLChunk*>(data+offset);
 		switch (chunk->type) {
 			case 0x31464E49: //magic_to_int("INF1"):
 				loadINF1Chunk(this, (MDLINF1Chunk*)chunk);
@@ -437,6 +471,8 @@ void MDLModel::load(const char *filepath) {
 	vertex_arrays[0].format.bindShaderAttribs(&shader);
 	shader.link();
 	shader.use();
+	color_loc = shader.getUniformLocation("u_color");
+	glUniform4f(color_loc, 1.0f, 1.0f, 1.0f, 1.0f); // white
 	mvp_loc = shader.getUniformLocation("mvp");
 	normal_mat_loc = shader.getUniformLocation("normal_mat");
 	bone_mats_loc = shader.getUniformLocation("bone_mats");
@@ -466,6 +502,20 @@ void MDLModel::applyAction(MDLAction *action) {
 	for (int ti = 0; ti < action->track_count; ti++) {
 		MDLActionTrack *track = action->tracks+ti;
 		bone_poses[track->bone_index] = track->bone_poses[action->frame];
+	}
+}
+
+void MDLBoneTransform::blend(MDLBoneTransform &other, float weight) {
+	translation = mix(translation, other.translation, weight);
+	scale = mix(scale, other.scale, weight);
+	rotation = normalize(mix(rotation, other.rotation, weight));
+}
+
+void MDLModel::blendAction(MDLAction *action, float weight) {
+	assert(action->frame >= 0 && action->frame < action->frame_count); // validate frame
+	for (int ti = 0; ti < action->track_count; ti++) {
+		MDLActionTrack *track = action->tracks+ti;
+		bone_poses[track->bone_index].blend(track->bone_poses[action->frame], weight);
 	}
 }
 
@@ -499,15 +549,15 @@ void MDLModel::boneMoveTo(int bone_index, vec3 target, vec3 normal) {
 		// all rotations will happen in this plane and around this axis
 		vec3 rot_axis_m = normalize(cross(pivot-bone2_m.translation, pivot-target));
 		float cos_gamma = dot(normalize(bone21), normalize(target-bone2_m.translation));
-		vec3 bone1_new_m = bone2_m.translation + quaternion(rot_axis_m, acos(cos_gamma_new)-acos(cos_gamma)) * bone21;
+		vec3 bone1_new_m = bone2_m.translation + quaternion(rot_axis_m, acosf(cos_gamma_new)-acosf(cos_gamma)) * bone21;
 		float cos_beta = dot(normalize(bone1_new_m-bone2_m.translation), normalize(target-bone1_new_m)); // target angle bone1
 
 		vec3 bone2_rot_axis_l = conjugate(bone2_m.rotation) * rot_axis_m;
 		vec3 bone1_rot_axis_l = conjugate(bone2_m.rotation) * rot_axis_m;
 
 		// apply result
-		bone_poses[bone2_index].rotation = bone_poses[bone2_index].rotation * quaternion(bone2_rot_axis_l, acos(cos_gamma_new)-acos(cos_gamma));
-		bone_poses[bone1_index].rotation = quaternion(bone1_rot_axis_l, -acos(cos_beta));
+		bone_poses[bone2_index].rotation = bone_poses[bone2_index].rotation * quaternion(bone2_rot_axis_l, acosf(cos_gamma_new)-acosf(cos_gamma));
+		bone_poses[bone1_index].rotation = quaternion(bone1_rot_axis_l, -acosf(cos_beta));
 
 		// rotate bone0 to match normal orientation
 		quat init_rot = bone0_m.rotation; // initial orientation of bone0
@@ -547,7 +597,7 @@ void MDLModel::draw(mat4 view_proj_mat) {
 
 	assert(texture_count <= 8);
 	for (int ti = 0; ti < texture_count; ti++) {
-		glActiveTexture(GL_TEXTURE0+ti);
+		glActiveTexture(GL_TEXTURE0+(GLenum)ti);
 		glBindTexture(GL_TEXTURE_2D, textures[ti]);
 	}
 
@@ -584,9 +634,15 @@ void MDLModel::draw(mat4 view_proj_mat) {
 
 			glUniform1i(colormap_loc, batch->texture_index);
 			// TODO: variable index type
-			glDrawElements(GL_TRIANGLES, batch->index_count, GL_UNSIGNED_SHORT, (GLvoid*)(batch->index_offset*sizeof(u16)));
+			glDrawElements(GL_TRIANGLES, batch->index_count, GL_UNSIGNED_SHORT, (GLvoid*)((size_t)batch->index_offset*sizeof(u16)));
 		}
 	}
+
+	if (prev_vertex_format != -1) {
+		MDLVertexArray *vertex_array = vertex_arrays+prev_vertex_format;
+		vertex_array->format.disable();
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 

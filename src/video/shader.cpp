@@ -1,12 +1,14 @@
 Shader::Shader() : _vert_shader(0), _frag_shader(0), _program(0) {
 }
 
-void Shader::free() {
-	// according to spec opengl automatically detaches shaders when deleting programs. i'm just being explicit
+void Shader::destroy() {
+	// according to spec opengl automatically detaches shaders when
+	// deleting programs. i'm just being explicit
 	if (_program) {
 		GLuint attached_shaders[SHADER_TYPE_COUNT];
 		GLsizei attached_shaders_count;
-		glGetAttachedShaders(_program, SHADER_TYPE_COUNT, &attached_shaders_count, attached_shaders);
+		glGetAttachedShaders(_program, SHADER_TYPE_COUNT,
+			&attached_shaders_count, attached_shaders);
 		for (int i = 0; i < attached_shaders_count; i++) {
 			glDetachShader(_program, attached_shaders[i]);
 		}
@@ -21,6 +23,10 @@ void Shader::free() {
 		glDeleteShader(_frag_shader);
 		_frag_shader = 0;
 	}
+}
+
+void Shader::free() {
+	destroy();
 }
 
 GLuint *Shader::getShader(GLuint shader_type) {
@@ -86,7 +92,9 @@ char *Shader::getLinkErrorLog() {
 	return nullptr;
 }
 
-bool Shader::compileAndAttach(GLuint shader_type, const char *shader_src, const char *shader_filename) {
+bool Shader::compileAndAttach(GLuint shader_type,
+	const char *shader_src, const char *shader_filename)
+{
 	GLuint *shader = getShader(shader_type);
 	if (!shader) return false;
 
@@ -107,8 +115,10 @@ bool Shader::compileAndAttach(GLuint shader_type, const char *shader_src, const 
 	}
 	*shader = compileShader(shader_type, shader_src);
 	if (!isCompiled(*shader)) {
-		const char *shader_type_name = shader_type == GL_FRAGMENT_SHADER ? "Fragment" : "Vertex";
-		LOGE("Compililation of %s shader \"%s\" failed.", shader_type_name, shader_filename);
+		const char *shader_type_name = shader_type ==
+			GL_FRAGMENT_SHADER ? "Fragment" : "Vertex";
+		LOGE("Compilation of %s shader \"%s\" failed.",
+			shader_type_name, shader_filename);
 #ifdef DEBUG
 		char *error_log = getCompileErrorLog(shader_type, *shader);
 		if (error_log) {
@@ -183,8 +193,9 @@ bool Shader::link() {
 		GLint validation_log_len;
 		glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &validation_log_len);
 		if (validation_log_len > 0) {
-			char *validation_log = new char[validation_log_len];
-			glGetProgramInfoLog(_program, validation_log_len, &validation_log_len, validation_log);
+			char *validation_log = new char[validation_log_len+1];
+			glGetProgramInfoLog(_program, validation_log_len+1,
+				&validation_log_len, validation_log);
 			LOGI("Validation log:\n%s", validation_log);
 			delete [] validation_log;
 		} else {

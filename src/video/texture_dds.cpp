@@ -47,7 +47,7 @@ struct DDSHeader {
 
 	DDSPixelFormat pf;
 	u32 caps[4];
-	
+
 	u32 texture_stage;
 };
 
@@ -59,7 +59,7 @@ GLuint loadCompressedTexture2D(const char *filepath, int *out_width, int *out_he
 	u8 *data = readDataFromFile(filepath_dds, &data_size);
 	if (!data) return 0;
 
-	DDSHeader *header = (DDSHeader*)data;
+	DDSHeader *header = reinterpret_cast<DDSHeader*>(data);
 #ifdef DEBUG
 	if (header->fourcc != FOURCC_DDS) {
 		LOGE("magic number mismatch in \"%s\"\n", filepath_dds);
@@ -88,10 +88,10 @@ GLuint loadCompressedTexture2D(const char *filepath, int *out_width, int *out_he
 	setWrapTexture2D(GL_REPEAT, GL_REPEAT);
 
 	int block_size = (internal_format == GL_COMPRESSED_RGBA_S3TC_DXT1_EXT) ? 8 : 16;
-	int width = header->width;
-	int height = header->height;
+	int width = (int)header->width;
+	int height = (int)header->height;
 	int offset = sizeof(DDSHeader);
-	for (int level = 0; level < header->mipmap_count; level++) {
+	for (GLint level = 0; level < (GLint)header->mipmap_count; level++) {
 		int size = block_size * ((width+3)/4)*((height+3)/4);
 		glCompressedTexImage2D(GL_TEXTURE_2D, level, internal_format, width, height, 0, size, data+offset);
 		offset += size;
@@ -101,8 +101,8 @@ GLuint loadCompressedTexture2D(const char *filepath, int *out_width, int *out_he
 
 	delete [] data;
 
-	if (out_width) *out_width = header->width;
-	if (out_height) *out_height = header->height;
+	if (out_width) *out_width = (int)header->width;
+	if (out_height) *out_height = (int)header->height;
 
 	return texture;
 }

@@ -46,6 +46,10 @@ void BitmapFont::init() {
 	_vertex_count = 0;
 }
 
+void BitmapFont::destroy() {
+	_shader.destroy();
+}
+
 void BitmapFont::drawText(const char *text, int x, int y) {
 	int x0 = x;
 

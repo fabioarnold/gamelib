@@ -23,3 +23,15 @@ union IntFloat {
 bool isPowerOfTwo(u32 i) {
 	return (i != 0) && !(i & (i-1));
 }
+
+int imin(int i0, int i1) {
+	return i0 < i1 ? i0 : i1;
+}
+
+int imax(int i0, int i1) {
+	return i0 > i1 ? i0 : i1;
+}
+
+bool fequal(float f0, float f1, float eps = 1e-6f) {
+	return fabsf(f1-f0) < eps;
+}

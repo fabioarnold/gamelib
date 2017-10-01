@@ -95,8 +95,8 @@ GLuint loadCompressedTexture2D(const char *filepath, int *out_width, int *out_he
 	int block_size = block_width*block_height*bits_per_pixel/8; // in bytes
 	int width = header->width;
 	int height = header->height;
-	int offset = sizeof(PVRTextureHeaderV3)-4+header->metadata_size;
-	for (int level = 0; level < header->mipmap_count; level++) {
+	size_t offset = sizeof(PVRTextureHeaderV3)-4+header->metadata_size;
+	for (u32 level = 0; level < header->mipmap_count; level++) {
 		int size = block_size * ((width+block_width-1)/block_width)*((height+block_height-1)/block_height);
 		glCompressedTexImage2D(GL_TEXTURE_2D, level, internal_format, width, height, 0, size, data+offset);
 		offset += size;
