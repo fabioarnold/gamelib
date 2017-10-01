@@ -79,8 +79,8 @@ GLuint loadTexture2D(float *pixels, int width, int height, int comp, bool build_
 
 	GLint internal_format;
 	GLenum format;
-	switch (comp) {
-		case 1: format = internal_format = GL_ALPHA; break;
+	switch (comp) { // OpenGL core profile requires sized internal formats
+		case 1: format = internal_format = GL_ALPHA; break; // removed in OpenGL core profile
 		case 2: format = internal_format = GL_LUMINANCE_ALPHA; break;
 		case 3: format = internal_format = GL_RGB; break;
 		case 4: format = internal_format = GL_RGBA; break;

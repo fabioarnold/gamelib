@@ -17,6 +17,7 @@ public:
 	void bindFragData(const char *name, GLuint color);
 
 	bool link();
+	char *getLinkErrorLog();
 
 	int getUniformLocation(const char *name);
 
@@ -29,6 +30,7 @@ private:
 	GLuint compileShader(GLuint shader_type, const char *shader_source);
 	bool isCompiled(GLuint shader);
 	char *getCompileErrorLog(GLuint shader_type, GLuint shader);
+	bool isLinked();
 
 	GLuint _vert_shader;
 	GLuint _frag_shader;

@@ -46,6 +46,13 @@ bool Shader::isCompiled(GLuint shader) {
 	return is_compiled != 0;
 }
 
+bool Shader::isLinked() {
+	if (!_program) return false;
+	GLint is_linked;
+	glGetProgramiv(_program, GL_LINK_STATUS, &is_linked);
+	return is_linked != 0;
+}
+
 char *Shader::getCompileErrorLog(GLuint shader_type, GLuint shader) {
 	GLint error_log_len;
 	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &error_log_len);
@@ -63,6 +70,20 @@ char *Shader::getShaderCompileErrorLog(GLuint shader_type) {
 	if (!shader || !*shader) return nullptr;
 	if (isCompiled(*shader)) return nullptr;
 	return getCompileErrorLog(shader_type, *shader);
+}
+
+char *Shader::getLinkErrorLog() {
+	printf("islinked %d\n", isLinked());
+	if (isLinked()) return nullptr;
+	GLint link_log_len;
+	glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &link_log_len);
+	printf("log_len %d\n", link_log_len);
+	if (link_log_len > 0) {
+		char *link_log = new char[link_log_len];
+		glGetProgramInfoLog(_program, link_log_len, &link_log_len, link_log);
+		return link_log;
+	}
+	return nullptr;
 }
 
 bool Shader::compileAndAttach(GLuint shader_type, const char *shader_src, const char *shader_filename) {
@@ -136,16 +157,11 @@ GLint Shader::getUniformLocation(const char *name) {
 bool Shader::link() {
 	glLinkProgram(_program);
 
-	GLint is_linked;
-	glGetProgramiv(_program, GL_LINK_STATUS, &is_linked);
-	if (!is_linked) {
+	if (!isLinked()) {
 		LOGE("Linking of shader program failed.");
 #ifdef DEBUG
-		GLint link_log_len;
-		glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &link_log_len);
-		if (link_log_len > 0) {
-			char *link_log = new char[link_log_len];
-			glGetProgramInfoLog(_program, link_log_len, &link_log_len, link_log);
+		char *link_log = getLinkErrorLog();
+		if (link_log) {
 			LOGE("Error log:\n%s", link_log);
 			delete [] link_log;
 		} else {
@@ -153,7 +169,6 @@ bool Shader::link() {
 		}
 #endif
 
-		free();
 		return false;
 	}
 
@@ -177,7 +192,6 @@ bool Shader::link() {
 		}
 #endif
 
-		free();
 		return false;
 	}
 
