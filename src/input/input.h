@@ -8,6 +8,14 @@ struct ButtonState {
 		}
 		_down = down;
 	}
+	// fake a click
+	void simulateClick() {
+		if (_down) {
+			_transition_count = 1;
+		} else {
+			_transition_count = 2;
+		}
+	}
 
 	// true if button is currently down
 	bool down() {
