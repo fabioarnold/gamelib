@@ -14,7 +14,7 @@ static void logToFile(FILE *file, const char *type,
 void logError(const char *fileName, int lineNumber, const char *format, ...) {
 	// SDL_ShowSimpleMessageBox
 
-	char buffer[256];
+	char buffer[1024];
 	va_list args;
 	va_start(args, format);
 	vsnprintf(buffer, sizeof(buffer), format, args);
@@ -23,7 +23,7 @@ void logError(const char *fileName, int lineNumber, const char *format, ...) {
 }
 
 void logWarning(const char *fileName, int lineNumber, const char *format, ...) {
-	char buffer[256];
+	char buffer[1024];
 	va_list args;
 	va_start(args, format);
 	vsnprintf(buffer, sizeof(buffer), format, args);
@@ -32,7 +32,7 @@ void logWarning(const char *fileName, int lineNumber, const char *format, ...) {
 }
 
 void logInfo(const char *fileName, int lineNumber, const char *format, ...) {
-	char buffer[256];
+	char buffer[1024];
 	va_list args;
 	va_start(args, format);
 	vsnprintf(buffer, sizeof(buffer), format, args);
