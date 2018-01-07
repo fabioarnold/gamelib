@@ -512,6 +512,8 @@ mat3 orthoNormalize(mat3 m) {
 	return result;
 }
 
+#undef near
+#undef far
 mat4 makeFrustum(float left, float right, float bottom, float top, float near, float far) {
 	mat4 result;
 	result.cols[0] = v4(2.0f * near / (right-left), 0.0f, 0.0f, 0.0f);
