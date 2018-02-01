@@ -108,7 +108,7 @@ float *imageFloat(u8 *pixels, int comp_count) {
 static inline void imageSwapPixel(float *dst, float *src, int comp) {
 	assert(comp > 0 && comp <= 4);
 	const size_t pixel_size = (size_t)comp * sizeof(float);
-	float buffer[comp];
+	float buffer[4];
 	memcpy(buffer, dst, pixel_size);
 	memcpy(dst,    src, pixel_size);
 	memcpy(src, buffer, pixel_size);

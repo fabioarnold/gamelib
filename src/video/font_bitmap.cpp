@@ -59,7 +59,7 @@ void BitmapFont::drawText(const char *text, int x, int y) {
 			continue;
 		}
 
-		vec2 p0 = v2(x, y);
+		vec2 p0 = v2((float)x, (float)y);
 		vec2 p1 = p0 + v2(8.0f);
 		vec2 t0 = v2((float)(*c%16) / 16.0f, (float)(*c/16) / 8.0f);
 		vec2 t1 = t0 + v2(1.0f / 16.0f, 1.0f / 8.0f);
