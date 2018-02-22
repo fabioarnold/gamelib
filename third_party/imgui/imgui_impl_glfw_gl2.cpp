@@ -352,6 +352,7 @@ bool    ImGui_ImplGlfwGL2_Init(GLFWwindow* window, bool install_callbacks)
     io.SetClipboardTextFn = ImGui_ImplGlfwGL2_SetClipboardText;
     io.GetClipboardTextFn = ImGui_ImplGlfwGL2_GetClipboardText;
     io.ClipboardUserData = g_Window;
+    io.RenderDrawListsFn = ImGui_ImplGlfwGL2_RenderDrawData;
 #ifdef _WIN32
     io.ImeWindowHandle = glfwGetWin32Window(g_Window);
 #endif
