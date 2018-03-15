@@ -1,4 +1,4 @@
-const u32 BF_MAX_VERTEX_COUNT = 1024;
+const int BF_MAX_VERTEX_COUNT = 1024;
 
 struct BFVertex {
 	vec2 position;
