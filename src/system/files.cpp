@@ -31,7 +31,7 @@ u8 *readDataFromFile(const char *filepath, size_t *out_data_size) {
 	return data;
 }
 
-char *readStringFromFile(const char *filepath, int *str_len) {
+char *readStringFromFile(const char *filepath, size_t *str_len) {
 	FILE *file = fopen(filepath, "r"); // r means textmode: drops \r on windows so file_size != str_len
 	if (!file) {
 		LOGE("Couldn't read %s", filepath);
@@ -45,9 +45,7 @@ char *readStringFromFile(const char *filepath, int *str_len) {
 	str[bytes_read] = '\0'; // zero terminated string
 	fclose(file);
 
-	if (str_len) {
-		*str_len = (int)bytes_read;
-	}
+	if (str_len) *str_len = bytes_read;
 
 	return str;
 }
