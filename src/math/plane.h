@@ -6,6 +6,14 @@ struct Plane {
 		return dot(normal, p) - d;
 	}
 
+	// point position in half space { -1: inside, 0: on boundary, 1: outside }
+	int classify(vec3 p, float epsilon = 0.0001f) {
+		float distance = distanceTo(p);
+		if (distance > epsilon) return 1;
+		else if (distance < -epsilon) return -1;
+		return 0;
+	}
+
 	vec3 project(vec3 p) {
 		return p - distanceTo(p)*normal;
 	}
