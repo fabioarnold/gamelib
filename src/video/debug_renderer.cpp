@@ -161,8 +161,8 @@ void DebugRenderer::drawLine(vec3 v0, vec3 v1) {
 	}
 	_vertex_positions[_vertex_count+0] = v0;
 	_vertex_positions[_vertex_count+1] = v1;
-	_vertex_normals[_vertex_count+0] = v3(0.0f);
-	_vertex_normals[_vertex_count+1] = v3(0.0f);
+	_vertex_normals[_vertex_count+0] = v3(1.0f);
+	_vertex_normals[_vertex_count+1] = v3(1.0f);
 	_vertex_count += 2;
 }
 
