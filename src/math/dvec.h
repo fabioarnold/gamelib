@@ -1,3 +1,13 @@
+union dvec2 {
+	struct {double x, y;};
+	double e[2];
+
+	inline double& operator[](int index) {
+		assert(index >= 0 && index < 2);
+		return e[index];
+	}
+};
+
 union dvec3 {
 	struct {double x, y, z;};
 	struct {double r, g, b;};
@@ -55,7 +65,7 @@ inline dvec3 operator/(dvec3 v, double d) {
 	return result;
 }
 
-inline float dot(dvec3 v0, dvec3 v1) {
+inline double dot(dvec3 v0, dvec3 v1) {
 	return v0.x*v1.x + v0.y*v1.y + v0.z*v1.z;
 }
 
