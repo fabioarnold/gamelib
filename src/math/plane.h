@@ -1,3 +1,5 @@
+struct Planed;
+
 struct Plane {
 	vec3 normal;
 	float d;
@@ -17,6 +19,18 @@ struct Plane {
 		else if (distance < -epsilon) return -1;
 		return 0;
 	}
+
+	bool intersectsRay(vec3 ro, vec3 rd, float *t, float epsilon = 0.0001f) {
+		float denom = dot(normal, rd);
+		if (fabsf(denom) > epsilon) { // not parallel
+			*t = distanceTo(ro) / denom;
+			if (*t >= 0.0f) return true;
+		}
+		return false;
+	}
+
+	Plane() {}
+	Plane(Planed pd);
 };
 
 // ccw
@@ -46,6 +60,15 @@ struct Planed {
 		else if (distance < -epsilon) return -1;
 		return 0;
 	}
+
+	bool intersectsRay(dvec3 ro, dvec3 rd, double *t, double epsilon = 0.0001) {
+		double denom = dot(normal, rd);
+		if (fabs(denom) > epsilon) { // not parallel
+			*t = distanceTo(ro) / denom;
+			if (*t >= 0.0) return true;
+		}
+		return false;
+	}
 };
 
 // ccw
@@ -54,4 +77,9 @@ Planed makePlane(dvec3 p0, dvec3 p1, dvec3 p2) {
 	result.normal = normalize(cross(p1-p0, p2-p0));
 	result.d = dot(result.normal, p0);
 	return result;
+}
+
+Plane::Plane(Planed pd) {
+	normal = v3(pd.normal);
+	d = (float)pd.d;
 }
