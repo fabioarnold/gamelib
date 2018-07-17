@@ -12,6 +12,15 @@ size_t getFileSize(FILE *opened_file) {
 	return file_size;
 }
 
+bool doesFileExist(const char *filepath) {
+	// there's access and stat, but windows requires special treatment...
+	// so do it the dumb and inefficient way
+	FILE *file = fopen(filepath, "rb");
+	bool exists = !!file;
+	fclose(file);
+	return exists;
+}
+
 u8 *readDataFromFile(const char *filepath, size_t *out_data_size) {
 	FILE *file = fopen(filepath, "rb");
 	if (!file) {

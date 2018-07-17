@@ -1,4 +1,8 @@
+// TODO rename to start with file-prefix or use namespace
+
 size_t getFileSize(FILE *opened_file);
+
+bool doesFileExist(const char *filepath);
 
 u8 *readDataFromFile(const char *filepath, size_t *out_data_size=NULL);
 char *readStringFromFile(const char *filepath, size_t *str_len=NULL);

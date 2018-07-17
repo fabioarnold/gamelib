@@ -214,7 +214,7 @@ void loadMAT1Chunk(MDLModel *model, MDLMAT1Chunk *chunk) {
 		char filepath[256];
 		// look in gfx folder
 		sprintf(filepath, "data/gfx/%s.tga", texture_filepaths);
-		if (access(filepath, R_OK) != -1) { // file exists
+		if (doesFileExist(filepath)) {
 			model->textures[ti] = loadTexture2D(filepath, false, nullptr, nullptr);
 		} else {
 			// might be a compressed texture
