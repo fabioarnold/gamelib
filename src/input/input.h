@@ -84,6 +84,17 @@ struct Mouse {
 	int wheel_x, wheel_y;
 } mouse; // currently only one mouse
 
+struct MultitouchGesture {
+	float center_x, center_y; // range [0; 1], last center point
+	float delta_angle; // in radians (rotating)
+	float delta_distance; // distance pinched (zooming)
+
+	void beginFrame() {
+		delta_angle = 0.0f;
+		delta_distance = 0.0f;
+	}
+} multitouch_gesture;
+
 // only works with bindings
 // bind specific key codes to virtual buttons (binary actions)
 struct Keyboard {
@@ -153,7 +164,7 @@ private:
 	ButtonState *button_bindings[32];
 } gamepads[8];
 
-/* axis helper functions */
+/* gamepad axis helper functions */
 
 // normalized direction of axis, considers dead zone
 vec2 getAxisDirection(vec2 axis, float dead_zone = 0.1f) {
@@ -167,4 +178,15 @@ vec2 getAxisScaled(vec2 axis, float dead_zone = 0.1f) {
 	if (len > 1.0f) return axis / len; // normalized
 	float scale = (len - dead_zone) / (1.0f - dead_zone);
 	return scale * axis;
+}
+
+/* general input functions */
+
+void inputBeginFrame() {
+	mouse.beginFrame();
+	multitouch_gesture.beginFrame();
+	keyboard.beginFrame();
+	for (size_t i = 0; i < ARRAY_COUNT(gamepads); i++) {
+		gamepads[i].beginFrame();
+	}
 }
