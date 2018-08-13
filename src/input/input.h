@@ -71,6 +71,8 @@ struct Mouse {
 		rel_y = y - old_y;
 		old_x = x;
 		old_y = y;
+		wheel_x = 0;
+		wheel_y = 0;
 	}
 
 	ButtonState& left()   {return buttons[0];}
