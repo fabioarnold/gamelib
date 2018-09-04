@@ -686,7 +686,7 @@ mat4 m4(vec3 translation, quat rotation, vec3 scale) {
 
 quat rotateTo(vec3 dir, vec3 target_dir) {
 	vec3 axis = normalize(cross(dir, target_dir));
-	if (isnan(axis.x)) return quaternion();
+	if (std::isnan(axis.x)) return quaternion();
 	float angle = acosf(dot(dir, target_dir));
 	return quaternion(axis, angle);
 }
