@@ -98,28 +98,32 @@ struct MultitouchGesture {
 	}
 } multitouch_gesture;
 
-// only works with bindings
-// bind specific key codes to virtual buttons (binary actions)
 struct Keyboard {
 	void beginFrame() {
-		for (size_t i = 0; i < ARRAY_COUNT(bindings); i++) {
+		for (size_t i = 0; i < ARRAY_COUNT(keys); i++) {
+			keys[i].beginFrame();
 			if (bindings[i]) bindings[i]->beginFrame();
 		}
 	}
 	void bind(int key_code, ButtonState *virt_button) {
-		assert(key_code >= 0 && key_code < (int)ARRAY_COUNT(bindings));
+		assert(key_code >= 0 && key_code < (int)ARRAY_COUNT(keys));
 		bindings[key_code] = virt_button;
 	}
 	// call this on key event
 	void onKey(int key_code, bool key_state) {
-		if (key_code >= 0 && key_code < (int)ARRAY_COUNT(bindings)
-		 && bindings[key_code]) {
-			bindings[key_code]->setState(key_state);
+		if (key_code >= 0 && key_code < (int)ARRAY_COUNT(keys)) {
+			keys[key_code].setState(key_state);
+			if (bindings[key_code]) bindings[key_code]->setState(key_state);
 		}
 	}
 
+	const char *getKeyName(int key_code); // to be implemented by platform specific code
+	int getKeyCode(const char *name);
+
+	ButtonState keys[512];
+
 private:
-	ButtonState *bindings[512]; // can be bound to any ButtonState
+	ButtonState *bindings[512];
 } keyboard; // only one keyboard
 
 struct Gamepad {
@@ -184,6 +188,13 @@ vec2 getAxisScaled(vec2 axis, float dead_zone = 0.1f) {
 }
 
 /* general input functions */
+
+void inputInit() {
+	memset(&mouse, 0, sizeof(mouse));
+	memset(&multitouch_gesture, 0, sizeof(multitouch_gesture));
+	memset(&keyboard, 0, sizeof(keyboard));
+	memset(&gamepads, 0, sizeof(gamepads));
+}
 
 void inputBeginFrame() {
 	mouse.beginFrame();
