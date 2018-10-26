@@ -18,6 +18,11 @@ struct ConfigVariable {
 		} string;
 	};
 
+	ConfigVariable(const char *key, bool *bool_ref) : type(ConfigVariableType::Bool), key(key), bool_ref(bool_ref) {}
+	ConfigVariable(const char *key, int *int_ref) : type(ConfigVariableType::Int), key(key), int_ref(int_ref) {}
+	ConfigVariable(const char *key, float *float_ref) : type(ConfigVariableType::Float), key(key), float_ref(float_ref) {}
+	ConfigVariable(const char *key, int str_len, char *str_val) : type(ConfigVariableType::String), key(key), string({str_len, str_val}) {}
+
 	void parseString(char *str) {
 		switch (type) {
 			case ConfigVariableType::Bool:
