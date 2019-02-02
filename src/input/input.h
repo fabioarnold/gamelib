@@ -104,6 +104,7 @@ struct Keyboard {
 			keys[i].beginFrame();
 			if (bindings[i]) bindings[i]->beginFrame();
 		}
+		text_input[0] = '\0';
 	}
 	void bind(int key_code, ButtonState *virt_button) {
 		assert(key_code >= 0 && key_code < (int)ARRAY_COUNT(keys));
@@ -121,6 +122,8 @@ struct Keyboard {
 	int getKeyCode(const char *name);
 
 	ButtonState keys[512];
+
+	char text_input[32]; // within a frame
 
 private:
 	ButtonState *bindings[512];
