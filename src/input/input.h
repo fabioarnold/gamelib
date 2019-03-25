@@ -79,12 +79,12 @@ struct Mouse {
 	ButtonState& right()  {return buttons[1];}
 	ButtonState& middle() {return buttons[2];}
 
-	int x, y;
-	int rel_x, rel_y;
-	int old_x, old_y;
+	int x = 0, y = 0;
+	int rel_x = 0, rel_y = 0;
+	int old_x = 0, old_y = 0;
 	ButtonState buttons[3];
-	int wheel_x, wheel_y;
-	bool is_relative; // mouse is in relative mode (no absolute movement)
+	int wheel_x = 0, wheel_y = 0;
+	bool is_relative = false; // mouse is in relative mode (no absolute movement)
 } mouse; // currently only one mouse
 
 struct MultitouchGesture {
