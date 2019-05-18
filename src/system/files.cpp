@@ -17,7 +17,7 @@ bool doesFileExist(const char *filepath) {
 	// so do it the dumb and inefficient way
 	FILE *file = fopen(filepath, "rb");
 	bool exists = !!file;
-	fclose(file);
+	if (exists) fclose(file);
 	return exists;
 }
 

@@ -67,10 +67,10 @@ struct Mouse {
 		for (size_t i = 0; i < ARRAY_COUNT(buttons); i++) {
 			buttons[i].beginFrame();
 		}
-		rel_x = x - old_x;
-		rel_y = y - old_y;
 		old_x = x;
 		old_y = y;
+		rel_x = 0;
+		rel_y = 0;
 		wheel_x = 0;
 		wheel_y = 0;
 	}
@@ -80,8 +80,8 @@ struct Mouse {
 	ButtonState& middle() {return buttons[2];}
 
 	int x = 0, y = 0;
-	int rel_x = 0, rel_y = 0;
 	int old_x = 0, old_y = 0;
+	float rel_x = 0, rel_y = 0;
 	ButtonState buttons[3];
 	int wheel_x = 0, wheel_y = 0;
 	bool is_relative = false; // mouse is in relative mode (no absolute movement)
