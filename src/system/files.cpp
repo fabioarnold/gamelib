@@ -21,6 +21,19 @@ bool doesFileExist(const char *filepath) {
 	return exists;
 }
 
+bool doesDirExist(const char *path) {
+	struct stat st;
+    return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
+}
+
+void createDir(const char *path) {
+#ifdef _WIN32
+	_mkdir(path);
+#else
+	mkdir(path, 0755);
+#endif
+}
+
 u8 *readDataFromFile(const char *filepath, size_t *out_data_size) {
 	FILE *file = fopen(filepath, "rb");
 	if (!file) {

@@ -3,6 +3,8 @@
 size_t getFileSize(FILE *opened_file);
 
 bool doesFileExist(const char *filepath);
+bool doesDirExist(const char *path);
+void createDir(const char *path);
 
 u8 *readDataFromFile(const char *filepath, size_t *out_data_size=NULL);
 char *readStringFromFile(const char *filepath, size_t *str_len=NULL);
