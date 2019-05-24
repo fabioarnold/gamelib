@@ -29,12 +29,14 @@ bool doesDirExist(const char *path) {
     return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
 }
 
-void createDir(const char *path) {
-#ifdef _WIN32
-	_mkdir(path);
-#else
-	mkdir(path, 0755);
+#ifndef mkdir
+#define mkdir(path, mode) _mkdir(path)
+#ifndef _mkdir
+#define _mkdir(path) assert(!"_mkdir unavailable")
 #endif
+#endif
+void createDir(const char *path) {
+	mkdir(path, 0755);
 }
 
 u8 *readDataFromFile(const char *filepath, size_t *out_data_size) {
