@@ -21,6 +21,9 @@ bool doesFileExist(const char *filepath) {
 	return exists;
 }
 
+#ifndef S_ISDIR
+#define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+#endif
 bool doesDirExist(const char *path) {
 	struct stat st;
     return (stat(path, &st) == 0 && S_ISDIR(st.st_mode));
